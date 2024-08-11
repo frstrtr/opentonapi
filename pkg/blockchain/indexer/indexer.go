@@ -111,7 +111,7 @@ func (idx *Indexer) next(prevChunk *chunk) (*chunk, error) {
 			}
 			block, err := idx.cli.GetBlock(context.Background(), *t)
 			if err != nil {
-				idx.logger.Error("failed to get block", zap.Error(err))
+				idx.logger.Error("failed to get block in shards", zap.Error(err))
 				if strings.Contains(err.Error(), "not in db") {
 					return nil, nil
 				}
