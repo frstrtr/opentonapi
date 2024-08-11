@@ -135,7 +135,7 @@ func NewLiteStorage(log *zap.Logger, cli *liteapi.Client, opts ...Option) (*Lite
 		logger: log,
 		// TODO: introduce an env variable to configure this number
 		// maxGoroutines: 5,
-		maxGoroutines: 20,
+		maxGoroutines: 55,
 		client:        cli,
 		executor:      o.executor,
 		stopCh:        make(chan struct{}),
