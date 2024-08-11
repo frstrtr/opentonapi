@@ -100,6 +100,7 @@ func (t *Tracer) Run(ctx context.Context) {
 			traceNumber.With(map[string]string{"type": "dropped"}).Inc()
 			continue
 		}
+		// PANIC occured here
 		go func(txEvent TransactionEventData) {
 			var hash tongo.Bits256
 			if err := hash.FromHex(txEvent.TxHash); err != nil {
