@@ -80,10 +80,12 @@ func (idx *Indexer) next(prevChunk *chunk) (*chunk, error) {
 	nextMasterID.Seqno += 1
 	masterBlockID, _, err := idx.cli.LookupBlock(context.Background(), nextMasterID, 1, nil, nil)
 	if err != nil {
+		idx.logger.Error("failed to lookup block", zap.Error(err))
 		return nil, err
 	}
 	masterBlock, err := idx.cli.GetBlock(context.Background(), masterBlockID)
 	if err != nil {
+		idx.logger.Error("failed to get block", zap.Error(err))
 		return nil, err
 	}
 	shards := tongo.ShardIDs(&masterBlock)
@@ -109,6 +111,7 @@ func (idx *Indexer) next(prevChunk *chunk) (*chunk, error) {
 			}
 			block, err := idx.cli.GetBlock(context.Background(), *t)
 			if err != nil {
+				idx.logger.Error("failed to get block", zap.Error(err))
 				if strings.Contains(err.Error(), "not in db") {
 					return nil, nil
 				}
@@ -127,6 +130,7 @@ func (idx *Indexer) next(prevChunk *chunk) (*chunk, error) {
 			chunkBlocks = append(chunkBlocks, IDandBlock{ID: queue[i], Block: block})
 			parents, err := tongo.GetParents(block.Info)
 			if err != nil {
+				idx.logger.Error("failed to get parents", zap.Error(err))
 				return nil, err
 			}
 			for _, parent := range parents {
