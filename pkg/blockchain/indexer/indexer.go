@@ -2,7 +2,6 @@ package indexer
 
 import (
 	"context"
-	"errors"
 	"sort"
 	"strings"
 	"time"
@@ -13,8 +12,6 @@ import (
 	"github.com/tonkeeper/tongo/tlb"
 	"go.uber.org/zap"
 )
-
-var ErrBlockNotReady = errors.New("block not ready")
 
 type chunk struct {
 	masterID tongo.BlockID
@@ -61,7 +58,7 @@ func (idx *Indexer) Run(ctx context.Context, channels []chan IDandBlock) {
 		time.Sleep(500 * time.Millisecond) // wait for the client to be ready
 		next, err := idx.next(chunk)
 		if err != nil {
-			if errors.Is(err, ErrBlockNotReady) {
+			if isBlockNotReadyError(err) {
 				time.Sleep(1 * time.Second)
 				continue
 			}
@@ -75,6 +72,7 @@ func (idx *Indexer) Run(ctx context.Context, channels []chan IDandBlock) {
 		}
 		chunk = next
 	}
+
 }
 
 func (idx *Indexer) next(prevChunk *chunk) (*chunk, error) {
@@ -82,9 +80,6 @@ func (idx *Indexer) next(prevChunk *chunk) (*chunk, error) {
 	nextMasterID.Seqno += 1
 	masterBlockID, _, err := idx.cli.LookupBlock(context.Background(), nextMasterID, 1, nil, nil)
 	if err != nil {
-		if strings.Contains(err.Error(), "block is not applied") {
-			return nil, ErrBlockNotReady
-		}
 		return nil, err
 	}
 	masterBlock, err := idx.cli.GetBlock(context.Background(), masterBlockID)
