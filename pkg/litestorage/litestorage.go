@@ -148,7 +148,8 @@ func NewLiteStorage(log *zap.Logger, cli *liteapi.Client, opts ...Option) (*Lite
 		executor: o.executor,
 		stopCh:   make(chan struct{}),
 		// read-only data
-		knownAccounts:    make(map[string][]tongo.AccountID),
+		knownAccounts: make(map[string][]tongo.AccountID),
+		//Accounts we loaded from file (who knows? :) )
 		trackingAccounts: map[tongo.AccountID]struct{}{},
 		// data for concurrent access
 		// TODO: implement expiration logic for the caches below.
