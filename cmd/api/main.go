@@ -45,6 +45,7 @@ func main() {
 	storage, err := litestorage.NewLiteStorage(
 		log,
 		client,
+		// Subscriibe to all accounts in the address book
 		litestorage.WithPreloadAccounts(cfg.App.Accounts),
 		litestorage.WithTFPools(book.TFPools()),
 		litestorage.WithKnownJettons(maps.Keys(book.GetKnownJettons())),
