@@ -43,7 +43,7 @@ type IDandBlock struct {
 func (idx *Indexer) Run(ctx context.Context, channels []chan IDandBlock) {
 	var chunk *chunk
 	for {
-		time.Sleep(200 * time.Millisecond)
+		time.Sleep(200 * time.Millisecond) // wait for the client to be ready
 		info, err := idx.cli.GetMasterchainInfo(ctx)
 		if err != nil {
 			idx.logger.Error("failed to get masterchain info", zap.Error(err))
@@ -58,11 +58,11 @@ func (idx *Indexer) Run(ctx context.Context, channels []chan IDandBlock) {
 	}
 
 	for {
-		time.Sleep(500 * time.Millisecond)
+		time.Sleep(500 * time.Millisecond) // wait for the client to be ready
 		next, err := idx.next(chunk)
 		if err != nil {
 			if errors.Is(err, ErrBlockNotReady) {
-				time.Sleep(10 * time.Second)
+				time.Sleep(1 * time.Second)
 				continue
 			}
 			idx.logger.Error("failed to get next chunk", zap.Error(err))
