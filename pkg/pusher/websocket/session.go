@@ -19,7 +19,7 @@ import (
 	"github.com/tonkeeper/opentonapi/pkg/pusher/utils"
 )
 
-const subscriptionLimit = 10000 // limitation of subscription by connection
+const subscriptionLimit = 1000000 // limitation of subscription by connection
 
 // session is a light-weight implementation of JSON-RPC protocol over an HTTP connection from a client.
 type session struct {

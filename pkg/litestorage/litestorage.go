@@ -168,7 +168,10 @@ func NewLiteStorage(log *zap.Logger, cli *liteapi.Client, opts ...Option) (*Lite
 		}
 	})
 	iterator := iter.Iterator[tongo.AccountID]{MaxGoroutines: storage.maxGoroutines}
+	counter1 := 0
 	iterator.ForEach(o.preloadAccounts, func(accountID *tongo.AccountID) {
+		fmt.Printf("\r...%d...", counter1)
+		counter1++
 		if err := storage.preloadAccount(*accountID); err != nil {
 			log.Error("failed to preload account",
 				zap.String("accountID", accountID.String()),
