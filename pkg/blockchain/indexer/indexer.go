@@ -59,7 +59,7 @@ func (idx *Indexer) Run(ctx context.Context, channels []chan IDandBlock) {
 		next, err := idx.next(chunk)
 		if err != nil {
 			if isBlockNotReadyError(err) {
-				time.Sleep(1 * time.Second)
+				time.Sleep(5 * time.Second)
 				continue
 			}
 			idx.logger.Error("failed to get next chunk", zap.Error(err))
