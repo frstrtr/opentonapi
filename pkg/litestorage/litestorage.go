@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
+	"runtime"
 	"sort"
 	"sync"
 	"time"
@@ -131,14 +132,21 @@ func NewLiteStorage(log *zap.Logger, cli *liteapi.Client, opts ...Option) (*Lite
 	if o.executor == nil {
 		o.executor = cli
 	}
+
+	// Get the number of CPU cores available
+	numCPU := runtime.NumCPU()
+	fmt.Printf("Number of CPU cores: %d\n", numCPU)
+
 	storage := &LiteStorage{
 		logger: log,
 		// TODO: introduce an env variable to configure this number
-		// maxGoroutines: 5,
-		maxGoroutines: 55,
-		client:        cli,
-		executor:      o.executor,
-		stopCh:        make(chan struct{}),
+
+		// Set maxGoroutines to the number of CPU cores
+		maxGoroutines: numCPU,
+
+		client:   cli,
+		executor: o.executor,
+		stopCh:   make(chan struct{}),
 		// read-only data
 		knownAccounts:    make(map[string][]tongo.AccountID),
 		trackingAccounts: map[tongo.AccountID]struct{}{},
