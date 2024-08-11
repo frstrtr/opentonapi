@@ -141,8 +141,8 @@ func NewLiteStorage(log *zap.Logger, cli *liteapi.Client, opts ...Option) (*Lite
 		logger: log,
 		// TODO: introduce an env variable to configure this number
 
-		// Set maxGoroutines to the number of CPU cores
-		maxGoroutines: numCPU,
+		// Set maxGoroutines to the double number of CPU cores
+		maxGoroutines: numCPU * 2,
 
 		client:   cli,
 		executor: o.executor,
