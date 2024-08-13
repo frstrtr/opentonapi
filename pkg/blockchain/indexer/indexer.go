@@ -57,7 +57,7 @@ func (idx *Indexer) Run(ctx context.Context, channels []chan IDandBlock) {
 
 	for {
 		// time.Sleep(500 * time.Millisecond)
-		time.Sleep(2000 * time.Millisecond)
+		time.Sleep(4000 * time.Millisecond)
 		next, err := idx.next(chunk)
 		if err != nil {
 			if isBlockNotReadyError(err) {
@@ -114,7 +114,7 @@ func (idx *Indexer) next(prevChunk *chunk) (*chunk, error) {
 					return nil, nil
 				}
 				//DEBUG:
-				fmt.Printf("Error: %v\n", err)
+				fmt.Printf("Error: %v\n\n", err)
 				//END DEBUG
 				return nil, err
 			}
