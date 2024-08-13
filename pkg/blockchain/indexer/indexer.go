@@ -111,7 +111,14 @@ func (idx *Indexer) next(prevChunk *chunk) (*chunk, error) {
 			}
 			var block *tlb.Block
 			for retries := 0; retries < 3; retries++ {
-				block, err = idx.cli.GetBlock(context.Background(), *t)
+				_, err := idx.cli.GetBlock(context.Background(), *t)
+				if err != nil {
+					idx.logger.Error("failed to get block in shards", zap.Error(err))
+					if strings.Contains(err.Error(), "not in db") {
+						continue
+					}
+					time.Sleep(2 * time.Second) // wait before retrying
+				}
 				if err == nil {
 					break
 				}
@@ -121,6 +128,7 @@ func (idx *Indexer) next(prevChunk *chunk) (*chunk, error) {
 				}
 				time.Sleep(2 * time.Second) // wait before retrying
 			}
+			_ = block // Ignore the unused variable error
 			if err != nil {
 				return nil, err
 			}
