@@ -40,7 +40,7 @@ type IDandBlock struct {
 func (idx *Indexer) Run(ctx context.Context, channels []chan IDandBlock) {
 	var chunk *chunk
 	for {
-		time.Sleep(200 * time.Millisecond) // wait for the client to be ready
+		time.Sleep(200 * time.Millisecond)
 		info, err := idx.cli.GetMasterchainInfo(ctx)
 		if err != nil {
 			idx.logger.Error("failed to get masterchain info", zap.Error(err))
@@ -55,11 +55,10 @@ func (idx *Indexer) Run(ctx context.Context, channels []chan IDandBlock) {
 	}
 
 	for {
-		time.Sleep(500 * time.Millisecond) // wait for the client to be ready
+		time.Sleep(500 * time.Millisecond)
 		next, err := idx.next(chunk)
 		if err != nil {
 			if isBlockNotReadyError(err) {
-				time.Sleep(2 * time.Second) // wait 2 seconds and try again
 				continue
 			}
 			idx.logger.Error("failed to get next chunk", zap.Error(err))
@@ -80,12 +79,10 @@ func (idx *Indexer) next(prevChunk *chunk) (*chunk, error) {
 	nextMasterID.Seqno += 1
 	masterBlockID, _, err := idx.cli.LookupBlock(context.Background(), nextMasterID, 1, nil, nil)
 	if err != nil {
-		idx.logger.Error("failed to lookup block", zap.Error(err))
 		return nil, err
 	}
 	masterBlock, err := idx.cli.GetBlock(context.Background(), masterBlockID)
 	if err != nil {
-		idx.logger.Error("failed to get block", zap.Error(err))
 		return nil, err
 	}
 	shards := tongo.ShardIDs(&masterBlock)
@@ -109,30 +106,14 @@ func (idx *Indexer) next(prevChunk *chunk) (*chunk, error) {
 			if _, ok := prevChunk.ids[*t]; ok {
 				return nil, nil
 			}
-			var block *tlb.Block
-			for retries := 0; retries < 3; retries++ {
-				_, err := idx.cli.GetBlock(context.Background(), *t)
-				if err != nil {
-					idx.logger.Error("failed to get block in shards", zap.Error(err))
-					if strings.Contains(err.Error(), "not in db") {
-						continue
-					}
-					time.Sleep(2 * time.Second) // wait before retrying
-				}
-				if err == nil {
-					break
-				}
-				idx.logger.Error("failed to get block in shards", zap.Error(err))
+			block, err := idx.cli.GetBlock(context.Background(), *t)
+			if err != nil {
 				if strings.Contains(err.Error(), "not in db") {
 					return nil, nil
 				}
-				time.Sleep(2 * time.Second) // wait before retrying
-			}
-			_ = block // Ignore the unused variable error
-			if err != nil {
 				return nil, err
 			}
-			return block, nil
+			return &block, nil
 		})
 		if err != nil {
 			return nil, err
@@ -145,7 +126,6 @@ func (idx *Indexer) next(prevChunk *chunk) (*chunk, error) {
 			chunkBlocks = append(chunkBlocks, IDandBlock{ID: queue[i], Block: block})
 			parents, err := tongo.GetParents(block.Info)
 			if err != nil {
-				idx.logger.Error("failed to get parents", zap.Error(err))
 				return nil, err
 			}
 			for _, parent := range parents {
