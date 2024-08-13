@@ -57,7 +57,7 @@ func (idx *Indexer) Run(ctx context.Context, channels []chan IDandBlock) {
 
 	for {
 		// time.Sleep(500 * time.Millisecond)
-		time.Sleep(1000 * time.Millisecond)
+		time.Sleep(2000 * time.Millisecond)
 		next, err := idx.next(chunk)
 		if err != nil {
 			if isBlockNotReadyError(err) {
