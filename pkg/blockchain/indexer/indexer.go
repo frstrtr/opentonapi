@@ -109,15 +109,22 @@ func (idx *Indexer) next(prevChunk *chunk) (*chunk, error) {
 			if _, ok := prevChunk.ids[*t]; ok {
 				return nil, nil
 			}
-			block, err := idx.cli.GetBlock(context.Background(), *t)
-			if err != nil {
+			var block *tlb.Block
+			for retries := 0; retries < 3; retries++ {
+				block, err = idx.cli.GetBlock(context.Background(), *t)
+				if err == nil {
+					break
+				}
 				idx.logger.Error("failed to get block in shards", zap.Error(err))
 				if strings.Contains(err.Error(), "not in db") {
 					return nil, nil
 				}
+				time.Sleep(2 * time.Second) // wait before retrying
+			}
+			if err != nil {
 				return nil, err
 			}
-			return &block, nil
+			return block, nil
 		})
 		if err != nil {
 			return nil, err

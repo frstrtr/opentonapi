@@ -1,0 +1,27 @@
+{
+    "level": "error",
+    "ts": 1723583878.4927638,
+    "caller": "indexer/indexer.go:114",
+    "msg": "failed to get block in shards",
+    "error": "error code: 651 message: block (0,4000000000000000,45093020) is not in db (possibly out of sync: shard_client_seqno=39675627 ls_seqno=39675627)",
+    "stacktrace": "github.com/tonkeeper/opentonapi/pkg/blockchain/indexer.(*Indexer).next.func1\n\t/home/user0/opentonapi/pkg/blockchain/indexer/indexer.go:114\ngithub.com/sourcegraph/conc/iter.Mapper[...].MapErr.func1\n\t/home/user0/go/pkg/mod/github.com/sourcegraph/conc@v0.3.0/iter/map.go:56\ngithub.com/sourcegraph/conc/iter.Iterator[...].ForEachIdx.func1\n\t/home/user0/go/pkg/mod/github.com/sourcegraph/conc@v0.3.0/iter/iter.go:76\ngithub.com/sourcegraph/conc/panics.(*Catcher).Try\n\t/home/user0/go/pkg/mod/github.com/sourcegraph/conc@v0.3.0/panics/panics.go:23\ngithub.com/sourcegraph/conc.(*WaitGroup).Go.func1\n\t/home/user0/go/pkg/mod/github.com/sourcegraph/conc@v0.3.0/waitgroup.go:32"
+}
+
+
+{
+    "level": "error",
+    "ts": 1723583879.0456805,
+    "caller": "indexer/indexer.go:83",
+    "msg": "failed to lookup block",
+    "error": "error code: 651 message: cannot find block (-1,8000000000000000) seqno=39675629: ltdb: block not found (last known masterchain block: 39675628)",
+    "stacktrace": "github.com/tonkeeper/opentonapi/pkg/blockchain/indexer.(*Indexer).next\n\t/home/user0/opentonapi/pkg/blockchain/indexer/indexer.go:83\ngithub.com/tonkeeper/opentonapi/pkg/blockchain/indexer.(*Indexer).Run\n\t/home/user0/opentonapi/pkg/blockchain/indexer/indexer.go:59"
+}
+
+{
+    "level": "error",
+    "ts": 1723584029.7545445,
+    "caller": "indexer/indexer.go:61",
+    "msg": "failed to get next chunk",
+    "error": "error code: 651 message: cannot find block (-1,8000000000000000) seqno=39675658: ltdb: block not found (last known masterchain block: 39675657)",
+    "stacktrace": "github.com/tonkeeper/opentonapi/pkg/blockchain/indexer.(*Indexer).Run\n\t/home/user0/opentonapi/pkg/blockchain/indexer/indexer.go:61"
+}
