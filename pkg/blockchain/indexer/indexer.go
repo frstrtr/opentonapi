@@ -2,6 +2,7 @@ package indexer
 
 import (
 	"context"
+	"fmt"
 	"sort"
 	"strings"
 	"time"
@@ -112,6 +113,9 @@ func (idx *Indexer) next(prevChunk *chunk) (*chunk, error) {
 				if strings.Contains(err.Error(), "not in db") {
 					return nil, nil
 				}
+				//DEBUG:
+				fmt.Printf("Error: %v\n", err)
+				//END DEBUG
 				return nil, err
 			}
 			return &block, nil
