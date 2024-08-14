@@ -1,0 +1,18 @@
+{
+    "level": "info",
+    "ts": 1723615485.8618274,
+    "caller": "api/middlewares.go:23",
+    "msg": "Handling request",
+    "operation": "GetEvent",
+    "path": "/v2/events/9b914b79b3c474f55620cbd9b275d4e8e653fb6e864617c0762895077034507d"
+}
+{
+    "level": "error",
+    "ts": 1723615485.8676102,
+    "caller": "api/middlewares.go:27",
+    "msg": "Fail",
+    "operation": "GetEvent",
+    "path": "/v2/events/9b914b79b3c474f55620cbd9b275d4e8e653fb6e864617c0762895077034507d",
+    "error": "code 500: {Error:not found}",
+    "stacktrace": "github.com/tonkeeper/opentonapi/pkg/api.NewServer.ogenLoggingMiddleware.func1\n\t/home/user0/opentonapi/pkg/api/middlewares.go:27\ngithub.com/ogen-go/ogen/middleware.ChainMiddlewares.func2\n\t/home/user0/go/pkg/mod/github.com/ogen-go/ogen@v1.0.0/middleware/middleware.go:92\ngithub.com/ogen-go/ogen/middleware.HookMiddleware[...]\n\t/home/user0/go/pkg/mod/github.com/ogen-go/ogen@v1.0.0/middleware/internal.go:29\ngithub.com/tonkeeper/opentonapi/pkg/oas.(*Server).handleGetEventRequest\n\t/home/user0/opentonapi/pkg/oas/oas_handlers_gen.go:6574\ngithub.com/tonkeeper/opentonapi/pkg/oas.(*Server).ServeHTTP\n\t/home/user0/opentonapi/pkg/oas/oas_router_gen.go:1433\nnet/http.(*ServeMux).ServeHTTP\n\t/usr/local/go/src/net/http/server.go:2688\nnet/http.serverHandler.ServeHTTP\n\t/usr/local/go/src/net/http/server.go:3142\nnet/http.(*conn).serve\n\t/usr/local/go/src/net/http/server.go:2044"
+}

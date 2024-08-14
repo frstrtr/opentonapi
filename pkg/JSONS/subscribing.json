@@ -1,0 +1,9 @@
+{
+    "level": "error",
+    "ts": 1723614826.1750429,
+    "caller": "litestorage/litestorage.go:186",
+    "msg": "failed to preload account",
+    "accountID": "0:2367d2ac2806af881253ffe10b34f56cae1fc502e11e5cdd3617823d0d8cc180",
+    "error": "error code: 651 message: cannot load block (0,4000000000000000,45099388):E92CA78DF43D1D12BB12B756B1D0F1E2380E7A0C64DC6CE289DCF7CF43C3A4E4:D89877101B3D99F0C8E1F612FA71AA074C10333712D4AD86BCBDD91A5D932287 : block (0,4000000000000000,45099388) is not in db (possibly out of sync: shard_client_seqno=39683198 ls_seqno=39683200)",
+    "stacktrace": "github.com/tonkeeper/opentonapi/pkg/litestorage.NewLiteStorage.func2\n\t/home/user0/opentonapi/pkg/litestorage/litestorage.go:186\ngithub.com/tonkeeper/opentonapi/pkg/litestorage.NewLiteStorage.Iterator[...].ForEach.func4\n\t/home/user0/go/pkg/mod/github.com/sourcegraph/conc@v0.3.0/iter/iter.go:49\ngithub.com/sourcegraph/conc/iter.Iterator[...].ForEachIdx.func1\n\t/home/user0/go/pkg/mod/github.com/sourcegraph/conc@v0.3.0/iter/iter.go:76\ngithub.com/sourcegraph/conc/panics.(*Catcher).Try\n\t/home/user0/go/pkg/mod/github.com/sourcegraph/conc@v0.3.0/panics/panics.go:23\ngithub.com/sourcegraph/conc.(*WaitGroup).Go.func1\n\t/home/user0/go/pkg/mod/github.com/sourcegraph/conc@v0.3.0/waitgroup.go:32"
+}
