@@ -126,22 +126,34 @@ func (h *Handler) SendBlockchainMessage(ctx context.Context, request *oas.SendBl
 }
 
 func (h *Handler) getTraceByHash(ctx context.Context, hash tongo.Bits256) (*core.Trace, bool, error) {
-	trace, err := h.storage.GetTrace(ctx, hash)
-	if err == nil || !errors.Is(err, core.ErrEntityNotFound) {
-		return trace, false, err
+	//add retry logic
+	const maxRetries = 3
+	const retryDelay = 2 * time.Second
+
+	for i := 0; i < maxRetries; i++ {
+		trace, err := h.storage.GetTrace(ctx, hash)
+		if err == nil || !errors.Is(err, core.ErrEntityNotFound) {
+			return trace, false, err
+		}
+
+		txHash, err := h.storage.SearchTransactionByMessageHash(ctx, hash)
+		if err != nil && !errors.Is(err, core.ErrEntityNotFound) {
+			return nil, false, err
+		}
+		if err == nil {
+			trace, err = h.storage.GetTrace(ctx, *txHash)
+			return trace, false, err
+		}
+
+		trace, ok := h.mempoolEmulate.traces.Get(hash)
+		if ok {
+			return trace, true, nil
+		}
+
+		// Wait before retrying
+		time.Sleep(retryDelay)
 	}
-	txHash, err := h.storage.SearchTransactionByMessageHash(ctx, hash)
-	if err != nil && !errors.Is(err, core.ErrEntityNotFound) {
-		return nil, false, err
-	}
-	if err == nil {
-		trace, err = h.storage.GetTrace(ctx, *txHash)
-		return trace, false, err
-	}
-	trace, ok := h.mempoolEmulate.traces.Get(hash)
-	if ok {
-		return trace, true, nil
-	}
+
 	return nil, false, core.ErrEntityNotFound
 }
 
