@@ -133,7 +133,7 @@ func (h *Handler) getTraceByHash(ctx context.Context, hash tongo.Bits256) (*core
 	for i := 0; i < maxRetries; i++ {
 		log.Printf("Attempt %d to get trace for hash: %s", i+1, hash)
 
-		// search in storage
+		// search directly in storage
 		trace, err := h.storage.GetTrace(ctx, hash)
 		if err == nil && trace != nil {
 			log.Printf("Trace found in storage: %v", trace)
@@ -143,12 +143,13 @@ func (h *Handler) getTraceByHash(ctx context.Context, hash tongo.Bits256) (*core
 			// return nil, false, err
 		}
 
-		//search in mempool
+		//search in LiteStorage
 		txHash, err := h.storage.SearchTransactionByMessageHash(ctx, hash)
-		log.Printf("Mem pool search: %v", txHash)
+		log.Printf("LiteStorage search by MessageHash: %v", txHash)
 		log.Printf("Error: %v", err)
 		if err == nil {
 			trace, err = h.storage.GetTrace(ctx, *txHash)
+			log.Printf("Trace found in LiteStorage: %v", trace)
 			return trace, false, err
 		} else if !errors.Is(err, core.ErrEntityNotFound) {
 			log.Printf("Failed to search transaction by message hash: %v", err)
@@ -160,6 +161,8 @@ func (h *Handler) getTraceByHash(ctx context.Context, hash tongo.Bits256) (*core
 		if ok {
 			log.Printf("Trace found in mempool emulation: %v", trace)
 			return trace, true, nil
+		} else {
+			log.Printf("Trace not found in mempool emulation")
 		}
 
 		// Wait before retrying
