@@ -131,12 +131,12 @@ func (h *Handler) getTraceByHash(ctx context.Context, hash tongo.Bits256) (*core
 	const retryDelay = 2 * time.Second
 
 	for i := 0; i < maxRetries; i++ {
-		log.Printf("Attempt %d to get trace for hash: %s", i+1, hash)
+		log.Printf("Attempt %d to get trace for hash: %x", i+1, hash)
 
 		// search directly in storage
 		trace, err := h.storage.GetTrace(ctx, hash)
 		if err == nil && trace != nil {
-			log.Printf("Trace found in storage: %v", trace)
+			log.Printf("Trace found directly in storage: %v", trace)
 			return trace, false, err
 		} else if err != nil && !errors.Is(err, core.ErrEntityNotFound) {
 			log.Printf("Failed to get trace from storage: %v", err)
