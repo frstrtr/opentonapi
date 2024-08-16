@@ -127,6 +127,7 @@ func (h *Handler) SendBlockchainMessage(ctx context.Context, request *oas.SendBl
 }
 
 func (h *Handler) getTraceByHash(ctx context.Context, hash tongo.Bits256) (*core.Trace, bool, error) {
+	// Retry logic
 	const maxRetries = 3
 	const retryDelay = 2 * time.Second
 
