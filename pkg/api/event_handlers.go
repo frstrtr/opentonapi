@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -126,11 +127,12 @@ func (h *Handler) SendBlockchainMessage(ctx context.Context, request *oas.SendBl
 }
 
 func (h *Handler) getTraceByHash(ctx context.Context, hash tongo.Bits256) (*core.Trace, bool, error) {
-	//add retry logic
 	const maxRetries = 3
 	const retryDelay = 2 * time.Second
 
 	for i := 0; i < maxRetries; i++ {
+		log.Printf("Attempt %d to get trace for hash: %s", i+1, hash)
+
 		trace, err := h.storage.GetTrace(ctx, hash)
 		if err == nil || !errors.Is(err, core.ErrEntityNotFound) {
 			return trace, false, err
@@ -154,6 +156,7 @@ func (h *Handler) getTraceByHash(ctx context.Context, hash tongo.Bits256) (*core
 		time.Sleep(retryDelay)
 	}
 
+	log.Printf("Failed to get trace for hash: %s after %d attempts", hash, maxRetries)
 	return nil, false, core.ErrEntityNotFound
 }
 
