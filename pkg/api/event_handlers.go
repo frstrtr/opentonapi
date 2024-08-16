@@ -146,7 +146,7 @@ func (h *Handler) getTraceByHash(ctx context.Context, hash tongo.Bits256) (*core
 
 		//search in LiteStorage
 		txHash, err := h.storage.SearchTransactionByMessageHash(ctx, hash)
-		log.Printf("LiteStorage search by MessageHash: %v", txHash)
+		log.Printf("LiteStorage search by MessageHash: %x", txHash)
 		log.Printf("Error: %v", err)
 		if err == nil {
 			trace, err = h.storage.GetTrace(ctx, *txHash)
@@ -170,7 +170,7 @@ func (h *Handler) getTraceByHash(ctx context.Context, hash tongo.Bits256) (*core
 		time.Sleep(retryDelay)
 	}
 
-	log.Printf("Failed to get trace for hash: %s after %d attempts", hash, maxRetries)
+	log.Printf("Failed to get trace for hash: %x after %d attempts", hash, maxRetries)
 	return nil, false, core.ErrEntityNotFound
 }
 
