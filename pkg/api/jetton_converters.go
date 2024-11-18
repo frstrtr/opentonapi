@@ -24,6 +24,9 @@ func jettonPreview(master ton.AccountID, meta NormalizedMetadata) oas.JettonPrev
 		Decimals:     meta.Decimals,
 		Image:        meta.Image,
 	}
+	if meta.CustomPayloadApiUri != "" {
+		preview.CustomPayloadAPIURI = oas.NewOptString(meta.CustomPayloadApiUri)
+	}
 	return preview
 }
 
@@ -93,7 +96,7 @@ func (h *Handler) convertJettonHistory(ctx context.Context, account ton.AccountI
 			}
 			event.Actions = append(event.Actions, convertedAction)
 		}
-		event.IsScam = h.spamFilter.CheckActions(event.Actions, &account)
+		event.IsScam = h.spamFilter.CheckActions(event.Actions, &account, trace.Account)
 		if len(event.Actions) == 0 {
 			continue
 		}
@@ -163,4 +166,17 @@ func (h *Handler) convertJettonBalance(ctx context.Context, wallet core.JettonWa
 	jettonBalance.Jetton = jettonPreview(wallet.JettonAddress, normalizedMetadata)
 
 	return jettonBalance, nil
+}
+
+func (h *Handler) convertJettonInfo(ctx context.Context, master core.JettonMaster, holders map[tongo.AccountID]int32) oas.JettonInfo {
+	meta := h.GetJettonNormalizedMetadata(ctx, master.Address)
+	metadata := jettonMetadata(master.Address, meta)
+	return oas.JettonInfo{
+		Mintable:     master.Mintable,
+		TotalSupply:  master.TotalSupply.String(),
+		Metadata:     metadata,
+		Verification: oas.JettonVerificationType(meta.Verification),
+		HoldersCount: holders[master.Address],
+		Admin:        convertOptAccountAddress(master.Admin, h.addressBook),
+	}
 }

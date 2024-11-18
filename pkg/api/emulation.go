@@ -93,7 +93,7 @@ func (h *Handler) addToMempool(ctx context.Context, bytesBoc []byte, shardAccoun
 	msgV4, err := tongoWallet.DecodeMessageV4(msgCell[0])
 	if err == nil {
 		diff := int64(msgV4.ValidUntil) - time.Now().Unix()
-		if diff < 600 {
+		if diff < 300 {
 			ttl = diff
 		}
 	}
@@ -206,7 +206,7 @@ func emulatedTreeToTrace(
 	transaction, err := core.ConvertTransaction(int32(a.AddrStd.WorkchainId), tongo.Transaction{
 		Transaction: tree.TX,
 		BlockID:     tongo.BlockIDExt{BlockID: tongo.BlockID{Workchain: int32(a.AddrStd.WorkchainId)}},
-	})
+	}, nil)
 	filteredMsgs := make([]core.Message, 0, len(transaction.OutMsgs))
 	for _, msg := range transaction.OutMsgs {
 		if msg.Destination == nil {
@@ -285,6 +285,16 @@ func emulatedTreeToTrace(
 			}
 		case abi.GetWalletDataResult:
 			master, _ := ton.AccountIDFromTlb(data.Jetton)
+			if master == nil {
+				continue
+			}
+			_, r, err := abi.GetWalletAddress(ctx, executor, *master, data.Owner)
+			if err != nil {
+				continue
+			}
+			if wa, ok := r.(abi.GetWalletAddressResult); !ok || wa.JettonWalletAddress.AddrStd.Address != t.Account.Address {
+				continue
+			}
 			additionalInfo.SetJettonMaster(accountID, *master)
 		case abi.GetSaleData_GetgemsResult:
 			price := big.Int(data.FullPrice)
@@ -333,6 +343,25 @@ func emulatedTreeToTrace(
 		case abi.GetPoolData_StonfiResult:
 			t0, err0 := ton.AccountIDFromTlb(data.Token0Address)
 			t1, err1 := ton.AccountIDFromTlb(data.Token1Address)
+			if err1 != nil || err0 != nil {
+				continue
+			}
+			additionalInfo.STONfiPool = &core.STONfiPool{
+				Token0: *t0,
+				Token1: *t1,
+			}
+			for _, accountID := range []ton.AccountID{*t0, *t1} {
+				_, value, err := abi.GetWalletData(ctx, sharedExecutor, accountID)
+				if err != nil {
+					return nil, err
+				}
+				data := value.(abi.GetWalletDataResult)
+				master, _ := ton.AccountIDFromTlb(data.Jetton)
+				additionalInfo.SetJettonMaster(accountID, *master)
+			}
+		case abi.GetPoolData_StonfiV2Result:
+			t0, err0 := ton.AccountIDFromTlb(data.Token0WalletAddress)
+			t1, err1 := ton.AccountIDFromTlb(data.Token1WalletAddress)
 			if err1 != nil || err0 != nil {
 				continue
 			}

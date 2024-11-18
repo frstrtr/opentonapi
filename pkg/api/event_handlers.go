@@ -211,10 +211,11 @@ func (h *Handler) GetEvent(ctx context.Context, params oas.GetEventParams) (*oas
 	if err != nil {
 		return nil, toError(http.StatusInternalServerError, err)
 	}
-	result, err := bath.FindActions(ctx, trace, bath.WithInformationSource(h.storage))
+	actions, err := bath.FindActions(ctx, trace, bath.WithInformationSource(h.storage))
 	if err != nil {
 		return nil, toError(http.StatusInternalServerError, err)
 	}
+	result := bath.EnrichWithIntentions(trace, actions)
 	event, err := h.toEvent(ctx, trace, result, params.AcceptLanguage)
 	if err != nil {
 		return nil, toError(http.StatusInternalServerError, err)
@@ -247,7 +248,6 @@ func (h *Handler) GetAccountEvents(ctx context.Context, params oas.GetAccountEve
 	events := make([]oas.AccountEvent, 0, len(traceIDs))
 
 	var lastLT uint64
-	var skippedInProgress []ton.Bits256
 	for _, traceID := range traceIDs {
 		lastLT = traceID.Lt
 		trace, err := h.storage.GetTrace(ctx, traceID.Hash)
@@ -259,16 +259,13 @@ func (h *Handler) GetAccountEvents(ctx context.Context, params oas.GetAccountEve
 			}
 			continue
 		}
-		if trace.InProgress() {
-			skippedInProgress = append(skippedInProgress, traceID.Hash)
-			continue
-		}
-		result, err := bath.FindActions(ctx, trace, bath.ForAccount(account.ID), bath.WithInformationSource(h.storage))
+		actions, err := bath.FindActions(ctx, trace, bath.ForAccount(account.ID), bath.WithInformationSource(h.storage))
 		if err != nil {
 			events = append(events, h.toUnknownAccountEvent(account.ID, traceID))
 			continue
 			//return nil, toError(http.StatusInternalServerError, err)
 		}
+		result := bath.EnrichWithIntentions(trace, actions)
 		e, err := h.toAccountEvent(ctx, account.ID, trace, result, params.AcceptLanguage, params.SubjectOnly.Value)
 		if err != nil {
 			events = append(events, h.toUnknownAccountEvent(account.ID, traceID))
@@ -277,7 +274,7 @@ func (h *Handler) GetAccountEvents(ctx context.Context, params oas.GetAccountEve
 		}
 		events = append(events, e)
 	}
-	if !(params.BeforeLt.IsSet() || params.StartDate.IsSet() || params.EndDate.IsSet()) { //if we look into history we don't need to mix mempool
+	if !(params.BeforeLt.IsSet() || params.StartDate.IsSet() || params.EndDate.IsSet() || (len(events) > 0 && events[0].InProgress)) { //if we look into history we don't need to mix mempool
 		memTraces, _ := h.mempoolEmulate.accountsTraces.Get(account.ID)
 		i := 0
 		for _, hash := range memTraces {
@@ -286,15 +283,16 @@ func (h *Handler) GetAccountEvents(ctx context.Context, params oas.GetAccountEve
 			}
 			tx, _ := h.storage.SearchTransactionByMessageHash(ctx, hash)
 			trace, prs := h.mempoolEmulate.traces.Get(hash)
-			if (tx != nil && !contains(skippedInProgress, *tx)) || !prs { //if err is nil it's already processed. If !prs we can't do anything
+			if tx != nil || !prs { //if err is nil it's already processed. If !prs we can't do anything
 				h.mempoolEmulate.traces.Delete(hash)
 				continue
 			}
 			i++
-			result, err := bath.FindActions(ctx, trace, bath.ForAccount(account.ID), bath.WithInformationSource(h.storage))
+			actions, err := bath.FindActions(ctx, trace, bath.ForAccount(account.ID), bath.WithInformationSource(h.storage))
 			if err != nil {
 				return nil, toError(http.StatusInternalServerError, err)
 			}
+			result := bath.EnrichWithIntentions(trace, actions)
 			event, err := h.toAccountEvent(ctx, account.ID, trace, result, params.AcceptLanguage, params.SubjectOnly.Value)
 			if err != nil {
 				return nil, toError(http.StatusInternalServerError, err)
@@ -341,16 +339,14 @@ func (h *Handler) GetAccountEvent(ctx context.Context, params oas.GetAccountEven
 	if err != nil {
 		return nil, toError(http.StatusInternalServerError, err)
 	}
-	result, err := bath.FindActions(ctx, trace, bath.ForAccount(account.ID), bath.WithInformationSource(h.storage))
+	actions, err := bath.FindActions(ctx, trace, bath.ForAccount(account.ID), bath.WithInformationSource(h.storage))
 	if err != nil {
 		return nil, toError(http.StatusInternalServerError, err)
 	}
+	result := bath.EnrichWithIntentions(trace, actions)
 	event, err := h.toAccountEvent(ctx, account.ID, trace, result, params.AcceptLanguage, params.SubjectOnly.Value)
 	if err != nil {
 		return nil, toError(http.StatusInternalServerError, err)
-	}
-	for i, j := 0, len(event.Actions)-1; i < j; i, j = i+1, j-1 {
-		event.Actions[i], event.Actions[j] = event.Actions[j], event.Actions[i]
 	}
 	if emulated {
 		event.InProgress = true
@@ -408,10 +404,11 @@ func (h *Handler) EmulateMessageToAccountEvent(ctx context.Context, request *oas
 	if err != nil {
 		return nil, toError(http.StatusInternalServerError, err)
 	}
-	result, err := bath.FindActions(ctx, trace, bath.WithInformationSource(h.storage))
+	actions, err := bath.FindActions(ctx, trace, bath.WithInformationSource(h.storage))
 	if err != nil {
 		return nil, toError(http.StatusInternalServerError, err)
 	}
+	result := bath.EnrichWithIntentions(trace, actions)
 	event, err := h.toAccountEvent(ctx, account.ID, trace, result, params.AcceptLanguage, false)
 	if err != nil {
 		return nil, toError(http.StatusInternalServerError, err)
@@ -459,10 +456,11 @@ func (h *Handler) EmulateMessageToEvent(ctx context.Context, request *oas.Emulat
 			return nil, toError(http.StatusInternalServerError, err)
 		}
 	}
-	result, err := bath.FindActions(ctx, trace, bath.WithInformationSource(h.storage))
+	actions, err := bath.FindActions(ctx, trace, bath.WithInformationSource(h.storage))
 	if err != nil {
 		return nil, toError(http.StatusInternalServerError, err)
 	}
+	result := bath.EnrichWithIntentions(trace, actions)
 	event, err := h.toEvent(ctx, trace, result, params.AcceptLanguage)
 	if err != nil {
 		return nil, toError(http.StatusInternalServerError, err)
@@ -635,10 +633,11 @@ func (h *Handler) EmulateMessageToWallet(ctx context.Context, request *oas.Emula
 		return nil, toError(http.StatusInternalServerError, err)
 	}
 	t := convertTrace(trace, h.addressBook)
-	result, err := bath.FindActions(ctx, trace, bath.ForAccount(*walletAddress), bath.WithInformationSource(h.storage))
+	actions, err := bath.FindActions(ctx, trace, bath.ForAccount(*walletAddress), bath.WithInformationSource(h.storage))
 	if err != nil {
 		return nil, toError(http.StatusInternalServerError, err)
 	}
+	result := bath.EnrichWithIntentions(trace, actions)
 	event, err := h.toAccountEvent(ctx, *walletAddress, trace, result, params.AcceptLanguage, true)
 	if err != nil {
 		return nil, toError(http.StatusInternalServerError, err)

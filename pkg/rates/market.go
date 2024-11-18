@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"math"
+	"math/big"
 	"net/http"
 	"sort"
 	"strconv"
@@ -25,25 +26,19 @@ const (
 	okx      string = "OKX"
 	huobi    string = "Huobi"
 	dedust   string = "DeDust"
-	stonfi   string = "STON.fi"
+	stonfiV1 string = "STON.fi v1"
+	stonfiV2 string = "STON.fi v2"
 	coinbase string = "Coinbase"
 )
 
-// minReserve specifies the minimum jetton reserves (equivalent to TON) for which prices can be determined
-const minReserve = float64(100 * ton.OneTON)
+// defaultMinReserve specifies the minimum jetton reserves (equivalent to TON) for which prices can be determined
+const defaultMinReserve = float64(100 * ton.OneTON)
 
-// minHoldersCount minimum number of holders threshold for jettons
-const minHoldersCount = 200
+// defaultMinHoldersCount minimum number of holders threshold for jettons
+const defaultMinHoldersCount = 100
 
 // defaultDecimals sets the default number of decimals to 9, similar to TON
 const defaultDecimals = 9
-
-// verifiedJettons map of jettons that skip the holder count check
-var verifiedJettons = map[ton.AccountID]struct{}{
-	ton.MustParseAccountID("EQDptzse--Atn4hDt2dGl3TxAN0Ak6taYXEiNKOg7EAibChH"): {},
-	ton.MustParseAccountID("EQBeaBmWEkb4-DMBrCHD9ixqz15X79umAHjpQb6fHD1rn5gD"): {},
-	ton.MustParseAccountID("EQA6_hsN-J3MmLaoJPMUN-g2iN4fG7SHsTQDlpuJ7yJkCgyC"): {},
-}
 
 // Asset represents an asset used in jetton price calculations within pools
 type Asset struct {
@@ -51,6 +46,14 @@ type Asset struct {
 	Decimals     int
 	Reserve      float64
 	HoldersCount int
+}
+
+// LpAsset represents a liquidity provider asset that holds a collection of assets in a pool
+type LpAsset struct {
+	Account     ton.AccountID
+	Decimals    int
+	TotalSupply *big.Int // The total supply of the liquidity provider asset
+	Assets      []Asset  // A slice of Asset included in the liquidity pool
 }
 
 // DeDustAssets represents a collection of assets from the DeDust platform, including their stability status
@@ -94,7 +97,7 @@ func (m *Mock) GetCurrentMarketsTonPrice() ([]Market, error) {
 		{
 			ID:                3,
 			Name:              bybit,
-			URL:               "https://api.bybit.com/derivatives/v3/public/tickers?symbol=TONUSDT",
+			URL:               "https://api.bybit.com/v5/market/tickers?category=spot&symbol=TONUSDT",
 			TonPriceConverter: convertedTonBybitResponse,
 			DateUpdate:        now,
 		},
@@ -339,8 +342,13 @@ func (m *Mock) getPools() map[ton.AccountID]float64 {
 			PoolResponseConverter: convertedDeDustPoolResponse,
 		},
 		{
-			Name:                  stonfi,
-			URL:                   m.StonFiResultUrl,
+			Name:                  stonfiV1,
+			URL:                   m.StonV1FiResultUrl,
+			PoolResponseConverter: convertedStonFiPoolResponse,
+		},
+		{
+			Name:                  stonfiV2,
+			URL:                   m.StonV2FiResultUrl,
 			PoolResponseConverter: convertedStonFiPoolResponse,
 		},
 	}
@@ -371,7 +379,8 @@ func (m *Mock) getPools() map[ton.AccountID]float64 {
 
 func convertedStonFiPoolResponse(pools map[ton.AccountID]float64, respBody io.ReadCloser) (map[ton.AccountID]float64, error) {
 	defer respBody.Close()
-	pools[references.PTon] = 1 // pTon = TON
+	pools[references.PTonV1] = 1 // pTonV1 = TON
+	pools[references.PTonV2] = 1 // pTonV2 = TON
 	reader := csv.NewReader(respBody)
 	records, err := reader.ReadAll()
 	if err != nil {
@@ -429,7 +438,29 @@ func convertedStonFiPoolResponse(pools map[ton.AccountID]float64, respBody io.Re
 		}
 		return firstAsset, secondAsset, nil
 	}
-
+	parseLpAsset := func(record []string, firstAsset, secondAsset Asset) (LpAsset, error) {
+		lpAsset, err := ton.ParseAccountID(record[8])
+		if err != nil {
+			return LpAsset{}, err
+		}
+		if record[9] == "0" {
+			return LpAsset{}, fmt.Errorf("unknown total supply")
+		}
+		totalSupply, ok := new(big.Int).SetString(record[9], 10)
+		if !ok {
+			return LpAsset{}, fmt.Errorf("failed to parse total supply")
+		}
+		decimals, err := strconv.Atoi(record[10])
+		if err != nil {
+			return LpAsset{}, err
+		}
+		return LpAsset{
+			Account:     lpAsset,
+			Decimals:    decimals,
+			TotalSupply: totalSupply,
+			Assets:      []Asset{firstAsset, secondAsset},
+		}, nil
+	}
 	actualAssets := make(map[ton.AccountID][]Asset)
 	// Update the assets with the largest reserves
 	updateActualAssets := func(mainAsset Asset, firstAsset, secondAsset Asset) {
@@ -439,7 +470,14 @@ func convertedStonFiPoolResponse(pools map[ton.AccountID]float64, respBody io.Re
 			return
 		}
 		for idx, asset := range assets {
-			if asset.Account == mainAsset.Account && asset.Reserve < mainAsset.Reserve {
+			assetReserveNormalised := asset.Reserve
+			mainAssetReserveNormalised := mainAsset.Reserve
+			// Adjust the reserves of assets considering their decimal places
+			if asset.Decimals != mainAsset.Decimals {
+				assetReserveNormalised = asset.Reserve / math.Pow10(asset.Decimals)
+				mainAssetReserveNormalised = mainAsset.Reserve / math.Pow10(mainAsset.Decimals)
+			}
+			if asset.Account == mainAsset.Account && assetReserveNormalised < mainAssetReserveNormalised {
 				if idx == 0 {
 					actualAssets[mainAsset.Account] = []Asset{firstAsset, secondAsset}
 				} else {
@@ -448,8 +486,9 @@ func convertedStonFiPoolResponse(pools map[ton.AccountID]float64, respBody io.Re
 			}
 		}
 	}
+	actualLpAssets := make(map[ton.AccountID]LpAsset)
 	for idx, record := range records {
-		if idx == 0 || len(record) < 8 { // Skip headers
+		if idx == 0 || len(record) < 10 { // Skip headers
 			continue
 		}
 		firstAsset, secondAsset, err := parseAssets(record)
@@ -462,8 +501,16 @@ func convertedStonFiPoolResponse(pools map[ton.AccountID]float64, respBody io.Re
 		}
 		// PTon is the primary token on StonFi, but it has only 50 holders.
 		// To avoid missing tokens, we check for pTON
-		if (firstAsset.Account != references.PTon && firstAsset.HoldersCount < minHoldersCount) || (secondAsset.Account != references.PTon && secondAsset.HoldersCount < minHoldersCount) {
+		isNotPTon := func(account ton.AccountID) bool {
+			return account != references.PTonV1 && account != references.PTonV2
+		}
+		if (isNotPTon(firstAsset.Account) && firstAsset.HoldersCount < defaultMinHoldersCount) ||
+			(isNotPTon(secondAsset.Account) && secondAsset.HoldersCount < defaultMinHoldersCount) {
 			continue
+		}
+		lpAsset, err := parseLpAsset(record, firstAsset, secondAsset)
+		if err == nil {
+			actualLpAssets[lpAsset.Account] = lpAsset
 		}
 		updateActualAssets(firstAsset, firstAsset, secondAsset)
 		updateActualAssets(secondAsset, firstAsset, secondAsset)
@@ -476,6 +523,16 @@ func convertedStonFiPoolResponse(pools map[ton.AccountID]float64, respBody io.Re
 		if _, ok := pools[accountID]; !ok {
 			pools[accountID] = price
 		}
+	}
+	for _, asset := range actualLpAssets {
+		if _, ok := pools[asset.Account]; ok {
+			continue
+		}
+		price := calculateLpAssetPrice(asset, pools)
+		if price == 0 {
+			continue
+		}
+		pools[asset.Account] = price
 	}
 	return pools, nil
 }
@@ -572,6 +629,29 @@ func convertedDeDustPoolResponse(pools map[ton.AccountID]float64, respBody io.Re
 		}
 		return DeDustAssets{Assets: []Asset{firstAsset, secondAsset}, IsStable: isStable}, nil
 	}
+	parseLpAsset := func(record []string, firstAsset, secondAsset Asset) (LpAsset, error) {
+		lpAsset, err := ton.ParseAccountID(record[11])
+		if err != nil {
+			return LpAsset{}, err
+		}
+		if record[12] == "0" {
+			return LpAsset{}, fmt.Errorf("unknown total supply")
+		}
+		totalSupply, ok := new(big.Int).SetString(record[12], 10)
+		if !ok {
+			return LpAsset{}, fmt.Errorf("failed to parse total supply")
+		}
+		decimals, err := strconv.Atoi(record[13])
+		if err != nil {
+			return LpAsset{}, err
+		}
+		return LpAsset{
+			Account:     lpAsset,
+			Decimals:    decimals,
+			TotalSupply: totalSupply,
+			Assets:      []Asset{firstAsset, secondAsset},
+		}, nil
+	}
 	actualAssets := make(map[ton.AccountID]DeDustAssets)
 	// Update the assets with the largest reserves
 	updateActualAssets := func(mainAsset Asset, deDustAssets DeDustAssets) {
@@ -582,7 +662,14 @@ func convertedDeDustPoolResponse(pools map[ton.AccountID]float64, respBody io.Re
 			return
 		}
 		for idx, asset := range assets.Assets {
-			if asset.Account == mainAsset.Account && asset.Reserve < mainAsset.Reserve {
+			assetReserveNormalised := asset.Reserve
+			mainAssetReserveNormalised := mainAsset.Reserve
+			// Adjust the reserves of assets considering their decimal places
+			if asset.Decimals != mainAsset.Decimals {
+				assetReserveNormalised = asset.Reserve / math.Pow10(asset.Decimals)
+				mainAssetReserveNormalised = mainAsset.Reserve / math.Pow10(mainAsset.Decimals)
+			}
+			if asset.Account == mainAsset.Account && assetReserveNormalised < mainAssetReserveNormalised {
 				if idx == 0 {
 					actualAssets[mainAsset.Account] = DeDustAssets{Assets: []Asset{firstAsset, secondAsset}, IsStable: deDustAssets.IsStable}
 				} else {
@@ -591,8 +678,9 @@ func convertedDeDustPoolResponse(pools map[ton.AccountID]float64, respBody io.Re
 			}
 		}
 	}
+	actualLpAssets := make(map[ton.AccountID]LpAsset)
 	for idx, record := range records {
-		if idx == 0 || len(record) < 10 { // Skip headers
+		if idx == 0 || len(record) < 14 { // Skip headers
 			continue
 		}
 		assets, err := parseAssets(record)
@@ -603,6 +691,10 @@ func convertedDeDustPoolResponse(pools map[ton.AccountID]float64, respBody io.Re
 		firstAsset, secondAsset := assets.Assets[0], assets.Assets[1]
 		if firstAsset.Reserve == 0 || secondAsset.Reserve == 0 {
 			continue
+		}
+		lpAsset, err := parseLpAsset(record, firstAsset, secondAsset)
+		if err == nil {
+			actualLpAssets[lpAsset.Account] = lpAsset
 		}
 		updateActualAssets(firstAsset, assets)
 		updateActualAssets(secondAsset, assets)
@@ -616,8 +708,55 @@ func convertedDeDustPoolResponse(pools map[ton.AccountID]float64, respBody io.Re
 			pools[accountID] = price
 		}
 	}
+	for _, asset := range actualLpAssets {
+		if _, ok := pools[asset.Account]; ok {
+			continue
+		}
+		price := calculateLpAssetPrice(asset, pools)
+		if price == 0 {
+			continue
+		}
+		pools[asset.Account] = price
+	}
 
 	return pools, nil
+}
+
+func calculateLpAssetPrice(asset LpAsset, pools map[ton.AccountID]float64) float64 {
+	firstAsset := asset.Assets[0]
+	secondAsset := asset.Assets[1]
+	firstAssetPrice, ok := pools[firstAsset.Account]
+	if !ok {
+		return 0
+	}
+	secondAssetPrice, ok := pools[secondAsset.Account]
+	if !ok {
+		return 0
+	}
+	// Adjust the reserves of assets considering their decimal places
+	firstAssetAdjustedReserve := new(big.Float).Quo(
+		big.NewFloat(firstAsset.Reserve),
+		new(big.Float).SetFloat64(math.Pow(10, float64(firstAsset.Decimals))),
+	)
+	secondAssetAdjustedReserve := new(big.Float).Quo(
+		big.NewFloat(secondAsset.Reserve),
+		new(big.Float).SetFloat64(math.Pow(10, float64(secondAsset.Decimals))),
+	)
+	// Calculate the total value of the jetton by summing the values of both assets
+	totalValue := new(big.Float).Add(
+		new(big.Float).Mul(firstAssetAdjustedReserve, big.NewFloat(firstAssetPrice)),
+		new(big.Float).Mul(secondAssetAdjustedReserve, big.NewFloat(secondAssetPrice)),
+	)
+	// Adjust the total supply for the asset decimals
+	totalSupplyAdjusted := new(big.Float).Quo(
+		new(big.Float).SetInt(asset.TotalSupply),
+		new(big.Float).SetFloat64(math.Pow(10, float64(asset.Decimals))),
+	)
+	// Calculate the price of the jetton by dividing the total value by the adjusted total supply of tokens
+	price := new(big.Float).Quo(totalValue, totalSupplyAdjusted)
+
+	convertedPrice, _ := price.Float64()
+	return convertedPrice
 }
 
 func calculatePoolPrice(firstAsset, secondAsset Asset, pools map[ton.AccountID]float64, isStable bool) (ton.AccountID, float64) {
@@ -629,10 +768,13 @@ func calculatePoolPrice(firstAsset, secondAsset Asset, pools map[ton.AccountID]f
 	var calculatedAccount ton.AccountID // The account for which we will find the price
 	var firstAssetDecimals, secondAssetDecimals int
 	if okFirst { // Knowing the first asset's price, we determine the second asset's price
+		minReserve := defaultMinReserve
 		// Converting reserve prices to TON
 		var updatedFirstAssetReserve float64
 		if firstAsset.Decimals != defaultDecimals {
 			updatedFirstAssetReserve = firstAsset.Reserve * math.Pow(10, float64(secondAsset.Decimals)-float64(firstAsset.Decimals)) * priceFirst
+			// Recalculate minReserve to the decimals of the asset
+			minReserve = defaultMinReserve * math.Pow(10, float64(secondAsset.Decimals)-defaultDecimals)
 		} else {
 			firstAsset.Reserve *= priceFirst
 			updatedFirstAssetReserve = firstAsset.Reserve
@@ -640,19 +782,20 @@ func calculatePoolPrice(firstAsset, secondAsset Asset, pools map[ton.AccountID]f
 		if updatedFirstAssetReserve < minReserve {
 			return ton.AccountID{}, 0
 		}
-		if _, ok := verifiedJettons[secondAsset.Account]; !ok {
-			if secondAsset.HoldersCount < minHoldersCount {
-				return ton.AccountID{}, 0
-			}
+		if secondAsset.HoldersCount < defaultMinHoldersCount {
+			return ton.AccountID{}, 0
 		}
 		calculatedAccount = secondAsset.Account
 		firstAssetDecimals, secondAssetDecimals = firstAsset.Decimals, secondAsset.Decimals
 	}
 	if okSecond { // Knowing the second asset's price, we determine the first asset's price
+		minReserve := defaultMinReserve
 		// Converting reserve prices to TON
 		var updatedSecondAssetReserve float64
 		if secondAsset.Decimals != defaultDecimals {
 			updatedSecondAssetReserve = secondAsset.Reserve * math.Pow(10, float64(firstAsset.Decimals)-float64(secondAsset.Decimals)) * priceSecond
+			// Recalculate minReserve to the decimals of the asset
+			minReserve = defaultMinReserve * math.Pow(10, float64(firstAsset.Decimals)-defaultDecimals)
 		} else {
 			secondAsset.Reserve *= priceSecond
 			updatedSecondAssetReserve = secondAsset.Reserve
@@ -660,10 +803,8 @@ func calculatePoolPrice(firstAsset, secondAsset Asset, pools map[ton.AccountID]f
 		if updatedSecondAssetReserve < minReserve {
 			return ton.AccountID{}, 0
 		}
-		if _, ok := verifiedJettons[firstAsset.Account]; !ok {
-			if firstAsset.HoldersCount < minHoldersCount {
-				return ton.AccountID{}, 0
-			}
+		if firstAsset.HoldersCount < defaultMinHoldersCount {
+			return ton.AccountID{}, 0
 		}
 		calculatedAccount = firstAsset.Account
 		firstAsset, secondAsset = secondAsset, firstAsset

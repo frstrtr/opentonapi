@@ -4081,6 +4081,32 @@ func (s *BouncePhaseType) UnmarshalText(data []byte) error {
 	}
 }
 
+// Ref: #/components/schemas/ChartPoints
+type ChartPoints struct {
+	V0 int64
+	V1 float64
+}
+
+// GetV0 returns the value of V0.
+func (s *ChartPoints) GetV0() int64 {
+	return s.V0
+}
+
+// GetV1 returns the value of V1.
+func (s *ChartPoints) GetV1() float64 {
+	return s.V1
+}
+
+// SetV0 sets the value of V0.
+func (s *ChartPoints) SetV0(val int64) {
+	s.V0 = val
+}
+
+// SetV1 sets the value of V1.
+func (s *ChartPoints) SetV1(val float64) {
+	s.V1 = val
+}
+
 // Ref: #/components/schemas/ComputePhase
 type ComputePhase struct {
 	Skipped             bool                 `json:"skipped"`
@@ -4420,6 +4446,7 @@ func (s *DecodedMessage) SetExtInMsgDecoded(val OptDecodedMessageExtInMsgDecoded
 type DecodedMessageExtInMsgDecoded struct {
 	WalletV3         OptDecodedMessageExtInMsgDecodedWalletV3         `json:"wallet_v3"`
 	WalletV4         OptDecodedMessageExtInMsgDecodedWalletV4         `json:"wallet_v4"`
+	WalletV5         OptDecodedMessageExtInMsgDecodedWalletV5         `json:"wallet_v5"`
 	WalletHighloadV2 OptDecodedMessageExtInMsgDecodedWalletHighloadV2 `json:"wallet_highload_v2"`
 }
 
@@ -4431,6 +4458,11 @@ func (s *DecodedMessageExtInMsgDecoded) GetWalletV3() OptDecodedMessageExtInMsgD
 // GetWalletV4 returns the value of WalletV4.
 func (s *DecodedMessageExtInMsgDecoded) GetWalletV4() OptDecodedMessageExtInMsgDecodedWalletV4 {
 	return s.WalletV4
+}
+
+// GetWalletV5 returns the value of WalletV5.
+func (s *DecodedMessageExtInMsgDecoded) GetWalletV5() OptDecodedMessageExtInMsgDecodedWalletV5 {
+	return s.WalletV5
 }
 
 // GetWalletHighloadV2 returns the value of WalletHighloadV2.
@@ -4446,6 +4478,11 @@ func (s *DecodedMessageExtInMsgDecoded) SetWalletV3(val OptDecodedMessageExtInMs
 // SetWalletV4 sets the value of WalletV4.
 func (s *DecodedMessageExtInMsgDecoded) SetWalletV4(val OptDecodedMessageExtInMsgDecodedWalletV4) {
 	s.WalletV4 = val
+}
+
+// SetWalletV5 sets the value of WalletV5.
+func (s *DecodedMessageExtInMsgDecoded) SetWalletV5(val OptDecodedMessageExtInMsgDecodedWalletV5) {
+	s.WalletV5 = val
 }
 
 // SetWalletHighloadV2 sets the value of WalletHighloadV2.
@@ -4591,6 +4628,31 @@ func (s *DecodedMessageExtInMsgDecodedWalletV4) SetOp(val int32) {
 
 // SetRawMessages sets the value of RawMessages.
 func (s *DecodedMessageExtInMsgDecodedWalletV4) SetRawMessages(val []DecodedRawMessage) {
+	s.RawMessages = val
+}
+
+type DecodedMessageExtInMsgDecodedWalletV5 struct {
+	ValidUntil  int64               `json:"valid_until"`
+	RawMessages []DecodedRawMessage `json:"raw_messages"`
+}
+
+// GetValidUntil returns the value of ValidUntil.
+func (s *DecodedMessageExtInMsgDecodedWalletV5) GetValidUntil() int64 {
+	return s.ValidUntil
+}
+
+// GetRawMessages returns the value of RawMessages.
+func (s *DecodedMessageExtInMsgDecodedWalletV5) GetRawMessages() []DecodedRawMessage {
+	return s.RawMessages
+}
+
+// SetValidUntil sets the value of ValidUntil.
+func (s *DecodedMessageExtInMsgDecodedWalletV5) SetValidUntil(val int64) {
+	s.ValidUntil = val
+}
+
+// SetRawMessages sets the value of RawMessages.
+func (s *DecodedMessageExtInMsgDecodedWalletV5) SetRawMessages(val []DecodedRawMessage) {
 	s.RawMessages = val
 }
 
@@ -5684,16 +5746,16 @@ func (s *GetBlockchainAccountTransactionsSortOrder) UnmarshalText(data []byte) e
 }
 
 type GetChartRatesOK struct {
-	Points jx.Raw `json:"points"`
+	Points []ChartPoints `json:"points"`
 }
 
 // GetPoints returns the value of Points.
-func (s *GetChartRatesOK) GetPoints() jx.Raw {
+func (s *GetChartRatesOK) GetPoints() []ChartPoints {
 	return s.Points
 }
 
 // SetPoints sets the value of Points.
-func (s *GetChartRatesOK) SetPoints(val jx.Raw) {
+func (s *GetChartRatesOK) SetPoints(val []ChartPoints) {
 	s.Points = val
 }
 
@@ -5797,6 +5859,20 @@ func (s *GetInscriptionOpTemplateType) UnmarshalText(data []byte) error {
 	}
 }
 
+type GetJettonInfosByAddressesReq struct {
+	AccountIds []string `json:"account_ids"`
+}
+
+// GetAccountIds returns the value of AccountIds.
+func (s *GetJettonInfosByAddressesReq) GetAccountIds() []string {
+	return s.AccountIds
+}
+
+// SetAccountIds sets the value of AccountIds.
+func (s *GetJettonInfosByAddressesReq) SetAccountIds(val []string) {
+	s.AccountIds = val
+}
+
 type GetMarketsRatesOK struct {
 	Markets []MarketTonRates `json:"markets"`
 }
@@ -5809,6 +5885,20 @@ func (s *GetMarketsRatesOK) GetMarkets() []MarketTonRates {
 // SetMarkets sets the value of Markets.
 func (s *GetMarketsRatesOK) SetMarkets(val []MarketTonRates) {
 	s.Markets = val
+}
+
+type GetNftCollectionItemsByAddressesReq struct {
+	AccountIds []string `json:"account_ids"`
+}
+
+// GetAccountIds returns the value of AccountIds.
+func (s *GetNftCollectionItemsByAddressesReq) GetAccountIds() []string {
+	return s.AccountIds
+}
+
+// SetAccountIds sets the value of AccountIds.
+func (s *GetNftCollectionItemsByAddressesReq) SetAccountIds(val []string) {
+	s.AccountIds = val
 }
 
 type GetNftItemsByAddressesReq struct {
@@ -7854,12 +7944,13 @@ func (s *JettonMintAction) SetJetton(val JettonPreview) {
 
 // Ref: #/components/schemas/JettonPreview
 type JettonPreview struct {
-	Address      string                 `json:"address"`
-	Name         string                 `json:"name"`
-	Symbol       string                 `json:"symbol"`
-	Decimals     int                    `json:"decimals"`
-	Image        string                 `json:"image"`
-	Verification JettonVerificationType `json:"verification"`
+	Address             string                 `json:"address"`
+	Name                string                 `json:"name"`
+	Symbol              string                 `json:"symbol"`
+	Decimals            int                    `json:"decimals"`
+	Image               string                 `json:"image"`
+	Verification        JettonVerificationType `json:"verification"`
+	CustomPayloadAPIURI OptString              `json:"custom_payload_api_uri"`
 }
 
 // GetAddress returns the value of Address.
@@ -7892,6 +7983,11 @@ func (s *JettonPreview) GetVerification() JettonVerificationType {
 	return s.Verification
 }
 
+// GetCustomPayloadAPIURI returns the value of CustomPayloadAPIURI.
+func (s *JettonPreview) GetCustomPayloadAPIURI() OptString {
+	return s.CustomPayloadAPIURI
+}
+
 // SetAddress sets the value of Address.
 func (s *JettonPreview) SetAddress(val string) {
 	s.Address = val
@@ -7920,6 +8016,11 @@ func (s *JettonPreview) SetImage(val string) {
 // SetVerification sets the value of Verification.
 func (s *JettonPreview) SetVerification(val JettonVerificationType) {
 	s.Verification = val
+}
+
+// SetCustomPayloadAPIURI sets the value of CustomPayloadAPIURI.
+func (s *JettonPreview) SetCustomPayloadAPIURI(val OptString) {
+	s.CustomPayloadAPIURI = val
 }
 
 // Ref: #/components/schemas/JettonQuantity
@@ -8970,6 +9071,8 @@ type MultisigOrder struct {
 	ApprovalsNum     int32    `json:"approvals_num"`
 	ExpirationDate   int64    `json:"expiration_date"`
 	Risk             Risk     `json:"risk"`
+	CreationDate     int64    `json:"creation_date"`
+	SignedBy         []string `json:"signed_by"`
 }
 
 // GetAddress returns the value of Address.
@@ -9012,6 +9115,16 @@ func (s *MultisigOrder) GetRisk() Risk {
 	return s.Risk
 }
 
+// GetCreationDate returns the value of CreationDate.
+func (s *MultisigOrder) GetCreationDate() int64 {
+	return s.CreationDate
+}
+
+// GetSignedBy returns the value of SignedBy.
+func (s *MultisigOrder) GetSignedBy() []string {
+	return s.SignedBy
+}
+
 // SetAddress sets the value of Address.
 func (s *MultisigOrder) SetAddress(val string) {
 	s.Address = val
@@ -9052,6 +9165,16 @@ func (s *MultisigOrder) SetRisk(val Risk) {
 	s.Risk = val
 }
 
+// SetCreationDate sets the value of CreationDate.
+func (s *MultisigOrder) SetCreationDate(val int64) {
+	s.CreationDate = val
+}
+
+// SetSignedBy sets the value of SignedBy.
+func (s *MultisigOrder) SetSignedBy(val []string) {
+	s.SignedBy = val
+}
+
 // Ref: #/components/schemas/Multisigs
 type Multisigs struct {
 	Multisigs []Multisig `json:"multisigs"`
@@ -9072,9 +9195,8 @@ type NftApprovedBy []NftApprovedByItem
 type NftApprovedByItem string
 
 const (
-	NftApprovedByItemGetgems     NftApprovedByItem = "getgems"
-	NftApprovedByItemTonkeeper   NftApprovedByItem = "tonkeeper"
-	NftApprovedByItemTonDiamonds NftApprovedByItem = "ton.diamonds"
+	NftApprovedByItemGetgems   NftApprovedByItem = "getgems"
+	NftApprovedByItemTonkeeper NftApprovedByItem = "tonkeeper"
 )
 
 // AllValues returns all NftApprovedByItem values.
@@ -9082,7 +9204,6 @@ func (NftApprovedByItem) AllValues() []NftApprovedByItem {
 	return []NftApprovedByItem{
 		NftApprovedByItemGetgems,
 		NftApprovedByItemTonkeeper,
-		NftApprovedByItemTonDiamonds,
 	}
 }
 
@@ -9092,8 +9213,6 @@ func (s NftApprovedByItem) MarshalText() ([]byte, error) {
 	case NftApprovedByItemGetgems:
 		return []byte(s), nil
 	case NftApprovedByItemTonkeeper:
-		return []byte(s), nil
-	case NftApprovedByItemTonDiamonds:
 		return []byte(s), nil
 	default:
 		return nil, errors.Errorf("invalid value: %q", s)
@@ -9108,9 +9227,6 @@ func (s *NftApprovedByItem) UnmarshalText(data []byte) error {
 		return nil
 	case NftApprovedByItemTonkeeper:
 		*s = NftApprovedByItemTonkeeper
-		return nil
-	case NftApprovedByItemTonDiamonds:
-		*s = NftApprovedByItemTonDiamonds
 		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)
@@ -9226,18 +9342,20 @@ func (s *NftCollections) SetNftCollections(val []NftCollection) {
 
 // Ref: #/components/schemas/NftItem
 type NftItem struct {
-	Address     string               `json:"address"`
-	Index       int64                `json:"index"`
-	Owner       OptAccountAddress    `json:"owner"`
-	Collection  OptNftItemCollection `json:"collection"`
-	Verified    bool                 `json:"verified"`
-	Metadata    NftItemMetadata      `json:"metadata"`
-	Sale        OptSale              `json:"sale"`
-	Previews    []ImagePreview       `json:"previews"`
-	DNS         OptString            `json:"dns"`
-	ApprovedBy  NftApprovedBy        `json:"approved_by"`
-	IncludeCnft OptBool              `json:"include_cnft"`
-	Trust       TrustType            `json:"trust"`
+	Address    string               `json:"address"`
+	Index      int64                `json:"index"`
+	Owner      OptAccountAddress    `json:"owner"`
+	Collection OptNftItemCollection `json:"collection"`
+	// Collection master contract confirmed that this item is part of collection.
+	Verified bool            `json:"verified"`
+	Metadata NftItemMetadata `json:"metadata"`
+	Sale     OptSale         `json:"sale"`
+	Previews []ImagePreview  `json:"previews"`
+	DNS      OptString       `json:"dns"`
+	// Please use trust field.
+	ApprovedBy  NftApprovedBy `json:"approved_by"`
+	IncludeCnft OptBool       `json:"include_cnft"`
+	Trust       TrustType     `json:"trust"`
 }
 
 // GetAddress returns the value of Address.
@@ -11826,6 +11944,52 @@ func (o OptDecodedMessageExtInMsgDecodedWalletV4) Or(d DecodedMessageExtInMsgDec
 	return d
 }
 
+// NewOptDecodedMessageExtInMsgDecodedWalletV5 returns new OptDecodedMessageExtInMsgDecodedWalletV5 with value set to v.
+func NewOptDecodedMessageExtInMsgDecodedWalletV5(v DecodedMessageExtInMsgDecodedWalletV5) OptDecodedMessageExtInMsgDecodedWalletV5 {
+	return OptDecodedMessageExtInMsgDecodedWalletV5{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptDecodedMessageExtInMsgDecodedWalletV5 is optional DecodedMessageExtInMsgDecodedWalletV5.
+type OptDecodedMessageExtInMsgDecodedWalletV5 struct {
+	Value DecodedMessageExtInMsgDecodedWalletV5
+	Set   bool
+}
+
+// IsSet returns true if OptDecodedMessageExtInMsgDecodedWalletV5 was set.
+func (o OptDecodedMessageExtInMsgDecodedWalletV5) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptDecodedMessageExtInMsgDecodedWalletV5) Reset() {
+	var v DecodedMessageExtInMsgDecodedWalletV5
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptDecodedMessageExtInMsgDecodedWalletV5) SetTo(v DecodedMessageExtInMsgDecodedWalletV5) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptDecodedMessageExtInMsgDecodedWalletV5) Get() (v DecodedMessageExtInMsgDecodedWalletV5, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptDecodedMessageExtInMsgDecodedWalletV5) Or(d DecodedMessageExtInMsgDecodedWalletV5) DecodedMessageExtInMsgDecodedWalletV5 {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
 // NewOptDepositStakeAction returns new OptDepositStakeAction with value set to v.
 func NewOptDepositStakeAction(v DepositStakeAction) OptDepositStakeAction {
 	return OptDepositStakeAction{
@@ -12142,6 +12306,98 @@ func (o OptGetBlockchainAccountTransactionsSortOrder) Get() (v GetBlockchainAcco
 
 // Or returns value if set, or given parameter if does not.
 func (o OptGetBlockchainAccountTransactionsSortOrder) Or(d GetBlockchainAccountTransactionsSortOrder) GetBlockchainAccountTransactionsSortOrder {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptGetJettonInfosByAddressesReq returns new OptGetJettonInfosByAddressesReq with value set to v.
+func NewOptGetJettonInfosByAddressesReq(v GetJettonInfosByAddressesReq) OptGetJettonInfosByAddressesReq {
+	return OptGetJettonInfosByAddressesReq{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptGetJettonInfosByAddressesReq is optional GetJettonInfosByAddressesReq.
+type OptGetJettonInfosByAddressesReq struct {
+	Value GetJettonInfosByAddressesReq
+	Set   bool
+}
+
+// IsSet returns true if OptGetJettonInfosByAddressesReq was set.
+func (o OptGetJettonInfosByAddressesReq) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptGetJettonInfosByAddressesReq) Reset() {
+	var v GetJettonInfosByAddressesReq
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptGetJettonInfosByAddressesReq) SetTo(v GetJettonInfosByAddressesReq) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptGetJettonInfosByAddressesReq) Get() (v GetJettonInfosByAddressesReq, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptGetJettonInfosByAddressesReq) Or(d GetJettonInfosByAddressesReq) GetJettonInfosByAddressesReq {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptGetNftCollectionItemsByAddressesReq returns new OptGetNftCollectionItemsByAddressesReq with value set to v.
+func NewOptGetNftCollectionItemsByAddressesReq(v GetNftCollectionItemsByAddressesReq) OptGetNftCollectionItemsByAddressesReq {
+	return OptGetNftCollectionItemsByAddressesReq{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptGetNftCollectionItemsByAddressesReq is optional GetNftCollectionItemsByAddressesReq.
+type OptGetNftCollectionItemsByAddressesReq struct {
+	Value GetNftCollectionItemsByAddressesReq
+	Set   bool
+}
+
+// IsSet returns true if OptGetNftCollectionItemsByAddressesReq was set.
+func (o OptGetNftCollectionItemsByAddressesReq) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptGetNftCollectionItemsByAddressesReq) Reset() {
+	var v GetNftCollectionItemsByAddressesReq
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptGetNftCollectionItemsByAddressesReq) SetTo(v GetNftCollectionItemsByAddressesReq) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptGetNftCollectionItemsByAddressesReq) Get() (v GetNftCollectionItemsByAddressesReq, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptGetNftCollectionItemsByAddressesReq) Or(d GetNftCollectionItemsByAddressesReq) GetNftCollectionItemsByAddressesReq {
 	if v, ok := o.Get(); ok {
 		return v
 	}

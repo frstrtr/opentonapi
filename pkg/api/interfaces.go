@@ -63,13 +63,14 @@ type storage interface {
 	GetNFTs(ctx context.Context, accounts []tongo.AccountID) ([]core.NftItem, error)
 	SearchNFTs(ctx context.Context, collection *core.Filter[tongo.AccountID], owner *core.Filter[tongo.AccountID], includeOnSale bool, onlyVerified bool, limit, offset int) ([]tongo.AccountID, error)
 	GetNftCollections(ctx context.Context, limit, offset *int32) ([]core.NftCollection, error)
+	GetNftCollectionsByAddresses(ctx context.Context, addresses []ton.AccountID) ([]core.NftCollection, error)
 	GetNftCollectionByCollectionAddress(ctx context.Context, address tongo.AccountID) (core.NftCollection, error)
 	GetAccountNftsHistory(ctx context.Context, address tongo.AccountID, limit int, beforeLT *int64, startTime *int64, endTime *int64) ([]tongo.Bits256, error)
 	GetNftHistory(ctx context.Context, address tongo.AccountID, limit int, beforeLT *int64, startTime *int64, endTime *int64) ([]tongo.Bits256, error)
 
 	FindAllDomainsResolvedToAddress(ctx context.Context, a tongo.AccountID, collections map[tongo.AccountID]string) ([]string, error)
 
-	GetJettonWalletsByOwnerAddress(ctx context.Context, address tongo.AccountID, jetton *tongo.AccountID, mintless bool) ([]core.JettonWallet, error)
+	GetJettonWalletsByOwnerAddress(ctx context.Context, address tongo.AccountID, jetton *tongo.AccountID, isJettonMaster bool, mintless bool) ([]core.JettonWallet, error)
 	GetJettonsHoldersCount(ctx context.Context, accounts []tongo.AccountID) (map[tongo.AccountID]int32, error)
 	GetJettonHolders(ctx context.Context, jettonMaster tongo.AccountID, limit, offset int) ([]core.JettonHolder, error)
 	GetJettonMasterMetadata(ctx context.Context, master tongo.AccountID) (tongo.JettonMetadata, error)
@@ -85,6 +86,7 @@ type storage interface {
 	GetWalletPubKey(ctx context.Context, address tongo.AccountID) (ed25519.PublicKey, error)
 	GetSubscriptions(ctx context.Context, address tongo.AccountID) ([]core.Subscription, error)
 	GetJettonMasters(ctx context.Context, limit, offset int) ([]core.JettonMaster, error)
+	GetJettonMastersByAddresses(ctx context.Context, addresses []ton.AccountID) ([]core.JettonMaster, error)
 
 	GetLastConfig(ctx context.Context) (ton.BlockchainConfig, error)
 	GetConfigRaw(ctx context.Context) ([]byte, error)
@@ -95,7 +97,7 @@ type storage interface {
 	GetAccountState(ctx context.Context, a tongo.AccountID) (tlb.ShardAccount, error)
 	GetLibraries(ctx context.Context, libraries []tongo.Bits256) (map[tongo.Bits256]*boc.Cell, error)
 
-	SearchAccountsByPubKey(pubKey ed25519.PublicKey) ([]tongo.AccountID, error)
+	SearchAccountsByPubKey(ctx context.Context, pubKey ed25519.PublicKey) ([]tongo.AccountID, error)
 
 	// TrimmedConfigBase64 returns the current trimmed blockchain config in a base64 format.
 	TrimmedConfigBase64() (string, error)
@@ -172,12 +174,12 @@ type Gasless interface {
 
 type ratesSource interface {
 	GetRates(date int64) (map[string]float64, error)
-	GetRatesChart(token string, currency string, pointsCount int, startDate *int64, endDate *int64) ([][]any, error)
+	GetRatesChart(token string, currency string, pointsCount int, startDate *int64, endDate *int64) ([]rates.Point, error)
 	GetMarketsTonPrice() ([]rates.Market, error)
 }
 
 type SpamFilter interface {
-	CheckActions(actions []oas.Action, viewer *ton.AccountID) bool
+	CheckActions(actions []oas.Action, viewer *ton.AccountID, initiator ton.AccountID) bool
 	JettonTrust(address tongo.AccountID, symbol, name, image string) core.TrustType
 	NftTrust(address tongo.AccountID, collection *ton.AccountID, description, image string) core.TrustType
 }

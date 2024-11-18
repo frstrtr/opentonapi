@@ -67,25 +67,20 @@ func (h *Handler) convertRisk(ctx context.Context, risk wallet.Risk, walletAddre
 		Jettons: nil,
 		Nfts:    nil,
 	}
-	if len(risk.Jettons) > 0 {
-		wallets, err := h.storage.GetJettonWalletsByOwnerAddress(ctx, walletAddress, nil, true)
-		if err != nil {
-			return oas.Risk{}, err
+	for jetton, quantity := range risk.Jettons {
+		jettonWallets, err := h.storage.GetJettonWalletsByOwnerAddress(ctx, walletAddress, &jetton, false, true)
+		if err != nil || len(jettonWallets) == 0 {
+			continue
 		}
-		for _, jettonWallet := range wallets {
-			quantity, ok := risk.Jettons[jettonWallet.Address]
-			if !ok {
-				continue
-			}
-			meta := h.GetJettonNormalizedMetadata(ctx, jettonWallet.JettonAddress)
-			preview := jettonPreview(jettonWallet.JettonAddress, meta)
-			jettonQuantity := oas.JettonQuantity{
-				Quantity:      quantity.String(),
-				WalletAddress: convertAccountAddress(jettonWallet.Address, h.addressBook),
-				Jetton:        preview,
-			}
-			oasRisk.Jettons = append(oasRisk.Jettons, jettonQuantity)
+		jettonWallet := jettonWallets[0]
+		meta := h.GetJettonNormalizedMetadata(ctx, jettonWallet.JettonAddress)
+		preview := jettonPreview(jettonWallet.JettonAddress, meta)
+		jettonQuantity := oas.JettonQuantity{
+			Quantity:      quantity.String(),
+			WalletAddress: convertAccountAddress(jettonWallet.Address, h.addressBook),
+			Jetton:        preview,
 		}
+		oasRisk.Jettons = append(oasRisk.Jettons, jettonQuantity)
 	}
 	if len(risk.Nfts) > 0 {
 		items, err := h.storage.GetNFTs(ctx, risk.Nfts)
@@ -774,7 +769,7 @@ func (h *Handler) toEvent(ctx context.Context, trace *core.Trace, result *bath.A
 		}
 		event.Actions[i] = convertedAction
 	}
-	event.IsScam = h.spamFilter.CheckActions(event.Actions, nil)
+	event.IsScam = h.spamFilter.CheckActions(event.Actions, nil, trace.Account)
 	previews := make(map[tongo.AccountID]oas.JettonPreview)
 	for _, flow := range result.ValueFlow.Accounts {
 		for jettonMaster := range flow.Jettons {
@@ -854,7 +849,7 @@ func (h *Handler) toAccountEvent(ctx context.Context, account tongo.AccountID, t
 		e.Actions = append(e.Actions, convertedAction)
 	}
 	if h.spamFilter != nil {
-		e.IsScam = h.spamFilter.CheckActions(e.Actions, &account)
+		e.IsScam = h.spamFilter.CheckActions(e.Actions, &account, trace.Account)
 	}
 	if len(e.Actions) == 0 {
 		e.Actions = []oas.Action{
