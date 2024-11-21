@@ -51,13 +51,13 @@ func Load() Config {
 		reflect.TypeOf([]config.LiteServer{}): func(v string) (interface{}, error) {
 			servers, err := config.ParseLiteServersEnvVar(v)
 			if err != nil {
-				log.Printf("SERVERS: ", servers)
+				log.Printf("SERVERS: %v", servers)
 				return nil, err
 			}
 			if len(servers) == 0 {
 				return nil, fmt.Errorf("empty liteservers list")
 			}
-			log.Printf("SERVERS: ", servers)
+			log.Printf("SERVERS: %v", servers)
 			return servers, nil
 		},
 		reflect.TypeOf(accountsList{}): func(v string) (interface{}, error) {
