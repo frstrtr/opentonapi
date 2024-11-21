@@ -1,0 +1,28 @@
+keeper/tongo/tlb.(*Decoder).Unmarshal(0x106a6a0?, 0xc14f10a330?, {0x102c960?, 0xc14f10a338?})
+        /home/user0/go/pkg/mod/github.com/tonkeeper/tongo@v1.9.1-0.20240710061111-60ccf2c10f84/tlb/decoder.go:40 +0x89
+github.com/tonkeeper/tongo/tlb.(*EitherRef[...]).UnmarshalTLB(0x0?, 0x16?, 0xc14f10a330?)
+        /home/user0/go/pkg/mod/github.com/tonkeeper/tongo@v1.9.1-0.20240710061111-60ccf2c10f84/tlb/primitives.go:212 +0x14d
+github.com/tonkeeper/tongo/tlb.decode(0xc03c4ee8a0, {0x0, 0x0}, {0x106a6a0?, 0xc14f10a330?, 0x106a6a0?}, 0xc566f12750)
+        /home/user0/go/pkg/mod/github.com/tonkeeper/tongo@v1.9.1-0.20240710061111-60ccf2c10f84/tlb/decoder.go:155 +0x1911
+github.com/tonkeeper/tongo/tlb.decodeBasicStruct(0xc03c4ee8a0, {0x1107e60?, 0xc14f10a240?, 0x0?}, 0xc566f12750)
+        /home/user0/go/pkg/mod/github.com/tonkeeper/tongo@v1.9.1-0.20240710061111-60ccf2c10f84/tlb/decoder.go:265 +0x331
+github.com/tonkeeper/tongo/tlb.decodeStruct(0xc03c4ee8a0, {0x1107e60?, 0xc14f10a240?, 0xc010f152a0?}, 0xc566f12750)
+        /home/user0/go/pkg/mod/github.com/tonkeeper/tongo@v1.9.1-0.20240710061111-60ccf2c10f84/tlb/decoder.go:252 +0x15b
+github.com/tonkeeper/tongo/tlb.decode(0xc03c4ee8a0, {0x0, 0x0}, {0x1107e60?, 0xc14f10a240?, 0xce?}, 0xc566f12750)
+        /home/user0/go/pkg/mod/github.com/tonkeeper/tongo@v1.9.1-0.20240710061111-60ccf2c10f84/tlb/decoder.go:212 +0x160e
+github.com/tonkeeper/tongo/tlb.decode(0xc03c4ee8a0, {0x0, 0x0}, {0xf2c160?, 0xc14f10a240?, 0xf2c160?}, 0xc566f12750)
+        /home/user0/go/pkg/mod/github.com/tonkeeper/tongo@v1.9.1-0.20240710061111-60ccf2c10f84/tlb/decoder.go:224 +0x13fa
+github.com/tonkeeper/tongo/tlb.Unmarshal(0xc03c4ee8a0, {0xf2c160, 0xc14f10a240})
+        /home/user0/go/pkg/mod/github.com/tonkeeper/tongo@v1.9.1-0.20240710061111-60ccf2c10f84/tlb/decoder.go:55 +0xa5
+github.com/tonkeeper/tongo/abi.init.decodeMsg.func10(0xc03c4ee8a0)
+        /home/user0/go/pkg/mod/github.com/tonkeeper/tongo@v1.9.1-0.20240710061111-60ccf2c10f84/abi/messages.go:33 +0xec
+github.com/tonkeeper/tongo/abi.InternalMessageDecoder(0xc0003bc008?, {0x0, 0x0, 0x4140db?})
+        /home/user0/go/pkg/mod/github.com/tonkeeper/tongo@v1.9.1-0.20240710061111-60ccf2c10f84/abi/messages.go:279 +0x10f
+github.com/tonkeeper/opentonapi/pkg/pusher/sources.msgOpCodeAndName({{{0xf0f52f, 0xa}, 0xc0217d1a00, 0x0, 0x0}, {0x0, {0x0, {{...}, {...}, {...}, ...}}}, ...}, ...)
+        /home/user0/opentonapi/pkg/pusher/sources/blockchain_source.go:64 +0xda
+github.com/tonkeeper/opentonapi/pkg/pusher/sources.(*BlockchainSource).Run.func1()
+        /home/user0/opentonapi/pkg/pusher/sources/blockchain_source.go:102 +0x585
+created by github.com/tonkeeper/opentonapi/pkg/pusher/sources.(*BlockchainSource).Run in goroutine 1
+        /home/user0/opentonapi/pkg/pusher/sources/blockchain_source.go:80 +0xa5
+exit status 2
+make: *** [Makefile:22: run] Error 1
