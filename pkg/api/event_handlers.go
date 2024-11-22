@@ -127,51 +127,51 @@ func (h *Handler) SendBlockchainMessage(ctx context.Context, request *oas.SendBl
 }
 
 func (h *Handler) getTraceByHash(ctx context.Context, hash tongo.Bits256) (*core.Trace, bool, error) {
-	// Retry logic
-	const maxRetries = 3
-	const retryDelay = 2 * time.Second
+	// // Retry logic
+	// const maxRetries = 3
+	// const retryDelay = 2 * time.Second
 
-	for i := 0; i < maxRetries; i++ {
-		log.Printf("Attempt %d to get trace for hash: %x", i+1, hash)
+	// for i := 0; i < maxRetries; i++ {
+	// 	log.Printf("Attempt %d to get trace for hash: %x", i+1, hash)
 
-		// search directly in storage
-		trace, err := h.storage.GetTrace(ctx, hash)
-		if err == nil && trace != nil {
-			log.Printf("Trace found directly in storage: %v", trace)
-			return trace, false, err
-		} else if err != nil && !errors.Is(err, core.ErrEntityNotFound) {
-			log.Printf("Failed to get trace from storage: %v", err)
-			// return nil, false, err
-		}
-
-		//search in LiteStorage
-		txHash, err := h.storage.SearchTransactionByMessageHash(ctx, hash)
-		log.Printf("LiteStorage search by MessageHash: %x", txHash)
-		log.Printf("Error: %v", err)
-		if err == nil {
-			trace, err = h.storage.GetTrace(ctx, *txHash)
-			log.Printf("Trace found in LiteStorage: %v", trace)
-			return trace, false, err
-		} else if !errors.Is(err, core.ErrEntityNotFound) {
-			log.Printf("Failed to search transaction by message hash: %v", err)
-			// return nil, false, err
-		}
-
-		//search in mempool emulation
-		trace, ok := h.mempoolEmulate.traces.Get(hash)
-		if ok {
-			log.Printf("Trace found in mempool emulation: %v", trace)
-			return trace, true, nil
-		} else {
-			log.Printf("Trace not found in mempool emulation")
-		}
-
-		// Wait before retrying
-		time.Sleep(retryDelay)
+	// search directly in storage
+	trace, err := h.storage.GetTrace(ctx, hash)
+	if err == nil && trace != nil {
+		log.Printf("Trace found directly in storage: %v", trace)
+		return trace, false, err
+	} else if err != nil && !errors.Is(err, core.ErrEntityNotFound) {
+		log.Printf("Failed to get trace from storage: %v", err)
+		// return nil, false, err
 	}
 
-	log.Printf("Failed to get trace for hash: %x after %d attempts", hash, maxRetries)
-	return nil, false, core.ErrEntityNotFound
+	//search in LiteStorage
+	txHash, err := h.storage.SearchTransactionByMessageHash(ctx, hash)
+	log.Printf("LiteStorage search by MessageHash: %x", txHash)
+	log.Printf("Error: %v", err)
+	if err == nil {
+		trace, err = h.storage.GetTrace(ctx, *txHash)
+		log.Printf("Trace found in LiteStorage: %v", trace)
+		return trace, false, err
+	} else if !errors.Is(err, core.ErrEntityNotFound) {
+		log.Printf("Failed to search transaction by message hash: %v", err)
+		// return nil, false, err
+	}
+
+	//search in mempool emulation
+	trace, ok := h.mempoolEmulate.traces.Get(hash)
+	if ok {
+		log.Printf("Trace found in mempool emulation: %v", trace)
+		return trace, true, nil
+	} else {
+		log.Printf("Trace not found in mempool emulation")
+	}
+
+	// Wait before retrying
+	time.Sleep(retryDelay)
+	// }
+
+	// log.Printf("Failed to get trace for hash: %x after %d attempts", hash, maxRetries)
+	// return nil, false, core.ErrEntityNotFound
 }
 
 func (h *Handler) GetTrace(ctx context.Context, params oas.GetTraceParams) (*oas.Trace, error) {
