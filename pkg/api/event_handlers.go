@@ -166,8 +166,8 @@ func (h *Handler) getTraceByHash(ctx context.Context, hash tongo.Bits256) (*core
 		log.Printf("Trace not found in mempool emulation")
 	}
 
-	// Wait before retrying
-	time.Sleep(retryDelay)
+	// // Wait before retrying
+	// time.Sleep(retryDelay)
 	// }
 
 	// log.Printf("Failed to get trace for hash: %x after %d attempts", hash, maxRetries)
