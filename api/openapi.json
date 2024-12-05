@@ -414,18 +414,6 @@
     },
     "description": "a list of account ids"
    },
-   "Backup": {
-    "content": {
-     "application/octet-stream": {
-      "schema": {
-       "format": "binary",
-       "type": "string"
-      }
-     }
-    },
-    "description": "Information for saving backup",
-    "required": true
-   },
    "BatchBoc": {
     "content": {
      "application/json": {
@@ -702,6 +690,10 @@
        "properties": {
         "error": {
          "type": "string"
+        },
+        "error_code": {
+         "format": "int64",
+         "type": "integer"
         }
        },
        "required": [
@@ -3739,6 +3731,10 @@
       "example": true,
       "type": "boolean"
      },
+     "preview": {
+      "example": "https://cache.tonapi.io/images/jetton.jpg",
+      "type": "string"
+     },
      "total_supply": {
       "example": "5887105890579978",
       "type": "string",
@@ -3753,7 +3749,8 @@
      "total_supply",
      "metadata",
      "verification",
-     "holders_count"
+     "holders_count",
+     "preview"
     ],
     "type": "object"
    },
@@ -3787,7 +3784,8 @@
       "type": "string"
      },
      "image": {
-      "example": "https://cache.tonapi.io/images/jetton.jpg",
+      "description": "this field currently returns a cached image URL (e.g., \"https://cache.tonapi.io/images/jetton.jpg\"). In the future, this will be replaced with the original URL from the metadata. The cached image is already available in the `preview` field of `JettonInfo` and will remain there.",
+      "example": "https://bitcoincash-example.github.io/website/logo.png",
       "type": "string"
      },
      "name": {
@@ -10451,76 +10449,6 @@
        }
       },
       "description": "auth token"
-     },
-     "default": {
-      "$ref": "#/components/responses/Error"
-     }
-    },
-    "tags": [
-     "Wallet"
-    ]
-   }
-  },
-  "/v2/wallet/backup": {
-   "get": {
-    "description": "Get backup info",
-    "operationId": "getWalletBackup",
-    "parameters": [
-     {
-      "in": "header",
-      "name": "X-TonConnect-Auth",
-      "required": true,
-      "schema": {
-       "type": "string"
-      }
-     }
-    ],
-    "responses": {
-     "200": {
-      "content": {
-       "application/json": {
-        "schema": {
-         "properties": {
-          "dump": {
-           "type": "string"
-          }
-         },
-         "required": [
-          "dump"
-         ],
-         "type": "object"
-        }
-       }
-      },
-      "description": "get wallet dump"
-     },
-     "default": {
-      "$ref": "#/components/responses/Error"
-     }
-    },
-    "tags": [
-     "Wallet"
-    ]
-   },
-   "put": {
-    "description": "Set backup info",
-    "operationId": "setWalletBackup",
-    "parameters": [
-     {
-      "in": "header",
-      "name": "X-TonConnect-Auth",
-      "required": true,
-      "schema": {
-       "type": "string"
-      }
-     }
-    ],
-    "requestBody": {
-     "$ref": "#/components/requestBodies/Backup"
-    },
-    "responses": {
-     "200": {
-      "description": "success"
      },
      "default": {
       "$ref": "#/components/responses/Error"

@@ -4,7 +4,6 @@ package oas
 
 import (
 	"fmt"
-	"io"
 
 	"github.com/go-faster/errors"
 	"github.com/go-faster/jx"
@@ -5266,7 +5265,8 @@ func (s *EncryptedComment) SetCipherText(val string) {
 }
 
 type Error struct {
-	Error string `json:"error"`
+	Error     string   `json:"error"`
+	ErrorCode OptInt64 `json:"error_code"`
 }
 
 // GetError returns the value of Error.
@@ -5274,9 +5274,19 @@ func (s *Error) GetError() string {
 	return s.Error
 }
 
+// GetErrorCode returns the value of ErrorCode.
+func (s *Error) GetErrorCode() OptInt64 {
+	return s.ErrorCode
+}
+
 // SetError sets the value of Error.
 func (s *Error) SetError(val string) {
 	s.Error = val
+}
+
+// SetErrorCode sets the value of ErrorCode.
+func (s *Error) SetErrorCode(val OptInt64) {
+	s.ErrorCode = val
 }
 
 // ErrorStatusCode wraps Error with StatusCode.
@@ -6997,20 +7007,6 @@ func (s *GetTonConnectPayloadOK) SetPayload(val string) {
 	s.Payload = val
 }
 
-type GetWalletBackupOK struct {
-	Dump string `json:"dump"`
-}
-
-// GetDump returns the value of Dump.
-func (s *GetWalletBackupOK) GetDump() string {
-	return s.Dump
-}
-
-// SetDump sets the value of Dump.
-func (s *GetWalletBackupOK) SetDump(val string) {
-	s.Dump = val
-}
-
 // Ref: #/components/schemas/ImagePreview
 type ImagePreview struct {
 	Resolution string `json:"resolution"`
@@ -7767,6 +7763,7 @@ type JettonInfo struct {
 	TotalSupply  string                 `json:"total_supply"`
 	Admin        OptAccountAddress      `json:"admin"`
 	Metadata     JettonMetadata         `json:"metadata"`
+	Preview      string                 `json:"preview"`
 	Verification JettonVerificationType `json:"verification"`
 	HoldersCount int32                  `json:"holders_count"`
 }
@@ -7789,6 +7786,11 @@ func (s *JettonInfo) GetAdmin() OptAccountAddress {
 // GetMetadata returns the value of Metadata.
 func (s *JettonInfo) GetMetadata() JettonMetadata {
 	return s.Metadata
+}
+
+// GetPreview returns the value of Preview.
+func (s *JettonInfo) GetPreview() string {
+	return s.Preview
 }
 
 // GetVerification returns the value of Verification.
@@ -7821,6 +7823,11 @@ func (s *JettonInfo) SetMetadata(val JettonMetadata) {
 	s.Metadata = val
 }
 
+// SetPreview sets the value of Preview.
+func (s *JettonInfo) SetPreview(val string) {
+	s.Preview = val
+}
+
 // SetVerification sets the value of Verification.
 func (s *JettonInfo) SetVerification(val JettonVerificationType) {
 	s.Verification = val
@@ -7833,10 +7840,13 @@ func (s *JettonInfo) SetHoldersCount(val int32) {
 
 // Ref: #/components/schemas/JettonMetadata
 type JettonMetadata struct {
-	Address             string    `json:"address"`
-	Name                string    `json:"name"`
-	Symbol              string    `json:"symbol"`
-	Decimals            string    `json:"decimals"`
+	Address  string `json:"address"`
+	Name     string `json:"name"`
+	Symbol   string `json:"symbol"`
+	Decimals string `json:"decimals"`
+	// This field currently returns a cached image URL (e.g., "https://cache.tonapi.io/images/jetton.
+	// jpg"). In the future, this will be replaced with the original URL from the metadata. The cached
+	// image is already available in the `preview` field of `JettonInfo` and will remain there.
 	Image               OptString `json:"image"`
 	Description         OptString `json:"description"`
 	Social              []string  `json:"social"`
@@ -14994,23 +15004,6 @@ func (s *ServiceStatus) SetIndexingLatency(val int) {
 // SetLastKnownMasterchainSeqno sets the value of LastKnownMasterchainSeqno.
 func (s *ServiceStatus) SetLastKnownMasterchainSeqno(val int32) {
 	s.LastKnownMasterchainSeqno = val
-}
-
-// SetWalletBackupOK is response for SetWalletBackup operation.
-type SetWalletBackupOK struct{}
-
-type SetWalletBackupReq struct {
-	Data io.Reader
-}
-
-// Read reads data from the Data reader.
-//
-// Kept to satisfy the io.Reader interface.
-func (s SetWalletBackupReq) Read(p []byte) (n int, err error) {
-	if s.Data == nil {
-		return 0, io.EOF
-	}
-	return s.Data.Read(p)
 }
 
 // Ref: #/components/schemas/SignRawMessage
