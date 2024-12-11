@@ -65,6 +65,7 @@ func Load() Config {
 			log.Printf("ACCOUNTS: %v", v)
 			var fallbackAccs accountsList
 			for _, s := range strings.Split(v, ",") {
+				log.Printf("Iterating over accounts: %v", s)
 				account, err := tongo.ParseAddress(s)
 				if err != nil {
 					return nil, err
