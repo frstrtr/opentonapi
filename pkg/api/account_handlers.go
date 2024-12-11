@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"golang.org/x/exp/slices"
 	"net/http"
 	"sort"
 	"strings"
@@ -71,6 +72,9 @@ func (h *Handler) GetAccount(ctx context.Context, params oas.GetAccountParams) (
 	} else {
 		res = convertToAccount(rawAccount, nil, h.state)
 	}
+	if rawAccount.ExtraBalances != nil {
+		res.ExtraBalance = convertExtraCurrencies(rawAccount.ExtraBalances)
+	}
 	return &res, nil
 }
 
@@ -112,6 +116,9 @@ func (h *Handler) GetAccounts(ctx context.Context, request oas.OptGetAccountsReq
 			res = convertToAccount(account, &ab, h.state)
 		} else {
 			res = convertToAccount(account, nil, h.state)
+		}
+		if account.ExtraBalances != nil {
+			res.ExtraBalance = convertExtraCurrencies(account.ExtraBalances)
 		}
 		results[account.AccountAddress] = res
 	}
@@ -200,6 +207,10 @@ func (h *Handler) ExecGetMethodForBlockchainAccount(ctx context.Context, params 
 		}
 		return nil, toError(http.StatusInternalServerError, err)
 	}
+	// TODO: remove parameter after user migration
+	if params.FixOrder.IsSet() && params.FixOrder.Value == true && len(params.Args) > 1 {
+		slices.Reverse(params.Args)
+	}
 	key, err := getMethodCacheKey(account.ID, params.MethodName, contract.LastTransactionLt, params.Args)
 	if err != nil {
 		return nil, toError(http.StatusInternalServerError, err)
@@ -208,12 +219,12 @@ func (h *Handler) ExecGetMethodForBlockchainAccount(ctx context.Context, params 
 		return result, nil
 	}
 	stack := make([]tlb.VmStackValue, 0, len(params.Args))
-	for _, p := range params.Args {
-		r, err := stringToTVMStackRecord(p)
+	for i := len(params.Args) - 1; i >= 0; i-- {
+		r, err := stringToTVMStackRecord(params.Args[i])
 		if err != nil {
-			return nil, toError(http.StatusBadRequest, fmt.Errorf("can't parse arg '%v' as any TVMStackValue", p))
+			return nil, toError(http.StatusBadRequest, fmt.Errorf("can't parse arg '%v' as any TVMStackValue", params.Args[i]))
 		}
-		stack = append(stack, r)
+		stack = append(stack, r) // we need to put the arguments on the stack in reverse order
 	}
 	// RunSmcMethodByID fetches the contract from the storage on its own,
 	// and it can happen that the contract has been changed and has another lt,
