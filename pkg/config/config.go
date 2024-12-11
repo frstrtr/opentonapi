@@ -21,11 +21,11 @@ type Config struct {
 	App struct {
 		LogLevel           string              `env:"LOG_LEVEL" envDefault:"INFO"`
 		MetricsPort        int                 `env:"METRICS_PORT" envDefault:"9010"`
-		Accounts           accountsList        `env:"ACCOUNTS"`
+		Accounts           accountsList        `env:"ACCOUNTS" envDefault:"0:0e41dc1dc3c9067ed24248580e12b3359818d83dee0304fabcf80845eafafdb2"`
 		LiteServers        []config.LiteServer `env:"LITE_SERVERS"`
 		SendingLiteservers []config.LiteServer `env:"SENDING_LITE_SERVERS"`
 		IsTestnet          bool                `env:"IS_TESTNET" envDefault:"false"`
-		AccountsFile       string              `env:"ACCOUNTS_FILE" envDefault:"numbers.txt"`
+		AccountsFile       string              `env:"ACCOUNTS_FILE" envDefault:"accounts.txt"`
 	}
 	TonConnect struct {
 		Secret string `env:"TON_CONNECT_SECRET"`
