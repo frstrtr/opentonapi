@@ -62,6 +62,7 @@ func Load() Config {
 		},
 		reflect.TypeOf(accountsList{}): func(v string) (interface{}, error) {
 			log.Printf("Fallback: Load accounts from environment variable")
+			log.Printf("ACCOUNTS: %v", v)
 			var fallbackAccs accountsList
 			for _, s := range strings.Split(v, ",") {
 				account, err := tongo.ParseAddress(s)
@@ -91,7 +92,7 @@ func Load() Config {
 func parseAccountsFromFile(v string) (interface{}, error) {
 	var accs accountsList
 
-	//Check if the environment variable is set
+	// Check if the environment variable is set
 	if v == "" {
 		log.Printf("INFO: Environment variable not set, using default accounts file 'accounts.txt'")
 		v = "accounts.txt" // Use the default file name
