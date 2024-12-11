@@ -72,7 +72,9 @@ func Load() Config {
 				}
 				fallbackAccs = append(fallbackAccs, account.ID)
 			}
-			return fallbackAccs, nil
+			log.Fatalf("Fallback: Loaded accounts: %v", fallbackAccs)
+			c.App.Accounts = fallbackAccs
+			return c
 		},
 	}); err != nil {
 		log.Panicf("[‼️ Config parsing failed] %+v\n", err)
