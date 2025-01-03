@@ -74,6 +74,10 @@ func (h *Handler) SendBlockchainMessage(ctx context.Context, request *oas.SendBl
 	if !request.Boc.IsSet() && len(request.Batch) == 0 {
 		return toError(http.StatusBadRequest, fmt.Errorf("boc not found"))
 	}
+	var meta map[string]string
+	if request.Meta.IsSet() {
+		meta = request.Meta.Value
+	}
 	if request.Boc.IsSet() {
 		m, err := decodeMessage(request.Boc.Value)
 		if err != nil {
@@ -87,6 +91,7 @@ func (h *Handler) SendBlockchainMessage(ctx context.Context, request *oas.SendBl
 			MsgBoc:  m.base64,
 			Payload: m.payload,
 			Details: h.ctxToDetails(ctx),
+			Meta:    meta,
 		}
 		sendMessageCounter.Inc()
 		if err := h.msgSender.SendMessage(ctx, msgCopy); err != nil {
@@ -115,6 +120,7 @@ func (h *Handler) SendBlockchainMessage(ctx context.Context, request *oas.SendBl
 			MsgBoc:  m.base64,
 			Payload: m.payload,
 			Details: h.ctxToDetails(ctx),
+			Meta:    meta,
 		}
 		copies = append(copies, msgCopy)
 	}
@@ -316,6 +322,13 @@ func (h *Handler) GetAccountEvents(ctx context.Context, params oas.GetAccountEve
 		//if len(events) > 0 {
 		//	lastLT = uint64(events[len(events)-1].Lt)
 		//}
+	}
+	for i, e := range events {
+		if e.InProgress {
+			for j, _ := range e.Actions {
+				events[i].Actions[j].Status = oas.ActionStatusOk
+			}
+		}
 	}
 	return &oas.AccountEvents{Events: events, NextFrom: int64(lastLT)}, nil
 }

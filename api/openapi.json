@@ -430,6 +430,12 @@
         "boc": {
          "format": "cell",
          "type": "string"
+        },
+        "meta": {
+         "additionalProperties": {
+          "type": "string"
+         },
+         "type": "object"
         }
        },
        "type": "object"
@@ -1525,35 +1531,27 @@
      },
      "compiler": {
       "enum": [
-       "func"
+       "func",
+       "fift",
+       "tact"
       ],
       "type": "string"
      },
      "methods": {
       "items": {
-       "properties": {
-        "id": {
-         "format": "int64",
-         "type": "integer"
-        },
-        "method": {
-         "example": "get_something",
-         "type": "string"
-        }
-       },
-       "required": [
-        "id",
-        "method"
-       ],
-       "type": "object"
+       "$ref": "#/components/schemas/Method"
       },
       "type": "array"
+     },
+     "source": {
+      "$ref": "#/components/schemas/Source"
      }
     },
     "required": [
      "code",
      "code_hash",
-     "methods"
+     "methods",
+     "compiler"
     ],
     "type": "object"
    },
@@ -3129,6 +3127,11 @@
       "example": 5,
       "type": "integer"
      },
+     "id": {
+      "example": 239,
+      "format": "int32",
+      "type": "integer"
+     },
      "image": {
       "example": "https://cache.tonapi.io/images/extra.jpg",
       "type": "string"
@@ -3139,6 +3142,7 @@
      }
     },
     "required": [
+     "id",
      "symbol",
      "decimals",
      "image"
@@ -3268,24 +3272,13 @@
       "type": "string",
       "x-js-format": "bigint"
      },
-     "decimals": {
-      "example": 5,
-      "type": "integer"
-     },
-     "id": {
-      "example": 239,
-      "format": "int32",
-      "type": "integer"
-     },
-     "name": {
-      "example": "FMS",
-      "type": "string"
+     "preview": {
+      "$ref": "#/components/schemas/EcPreview"
      }
     },
     "required": [
-     "id",
      "amount",
-     "decimals"
+     "preview"
     ],
     "type": "object"
    },
@@ -3828,6 +3821,10 @@
       "example": "https://cache.tonapi.io/images/jetton.jpg",
       "type": "string"
      },
+     "score": {
+      "format": "int32",
+      "type": "integer"
+     },
      "total_supply": {
       "example": "5887105890579978",
       "type": "string",
@@ -3967,6 +3964,10 @@
      "name": {
       "example": "Wrapped TON",
       "type": "string"
+     },
+     "score": {
+      "format": "int32",
+      "type": "integer"
      },
      "symbol": {
       "example": "WTON",
@@ -4309,6 +4310,23 @@
      "trace",
      "risk",
      "event"
+    ],
+    "type": "object"
+   },
+   "Method": {
+    "properties": {
+     "id": {
+      "format": "int64",
+      "type": "integer"
+     },
+     "method": {
+      "example": "get_something",
+      "type": "string"
+     }
+    },
+    "required": [
+     "id",
+     "method"
     ],
     "type": "object"
    },
@@ -5358,6 +5376,50 @@
     ],
     "type": "object"
    },
+   "Source": {
+    "properties": {
+     "files": {
+      "items": {
+       "$ref": "#/components/schemas/SourceFile"
+      },
+      "type": "array"
+     }
+    },
+    "required": [
+     "files"
+    ],
+    "type": "object"
+   },
+   "SourceFile": {
+    "properties": {
+     "content": {
+      "type": "string"
+     },
+     "include_in_command": {
+      "example": false,
+      "type": "boolean"
+     },
+     "is_entrypoint": {
+      "example": false,
+      "type": "boolean"
+     },
+     "is_std_lib": {
+      "example": false,
+      "type": "boolean"
+     },
+     "name": {
+      "type": "string"
+     }
+    },
+    "required": [
+     "name",
+     "content",
+     "is_entrypoint",
+     "is_std_lib",
+     "include_in_command"
+    ],
+    "type": "object"
+   },
    "StateInit": {
     "properties": {
      "boc": {
@@ -6071,7 +6133,13 @@
         "jetton": {
          "$ref": "#/components/schemas/JettonPreview"
         },
+        "qty": {
+         "example": "200",
+         "type": "string",
+         "x-js-format": "bigint"
+        },
         "quantity": {
+         "deprecated": true,
          "example": 10,
          "format": "int64",
          "type": "integer",
@@ -6080,6 +6148,7 @@
        },
        "required": [
         "account",
+        "qty",
         "quantity",
         "jetton"
        ],
@@ -9935,6 +10004,51 @@
     },
     "tags": [
      "NFT"
+    ]
+   }
+  },
+  "/v2/openapi.json": {
+   "get": {
+    "description": "Get the openapi.json file",
+    "operationId": "getOpenapiJson",
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      }
+     },
+     "default": {
+      "$ref": "#/components/responses/Error"
+     }
+    },
+    "tags": [
+     "Utilities"
+    ]
+   }
+  },
+  "/v2/openapi.yml": {
+   "get": {
+    "description": "Get the openapi.yml file",
+    "operationId": "getOpenapiYml",
+    "responses": {
+     "200": {
+      "content": {
+       "application/yaml": {
+        "schema": {
+         "format": "binary",
+         "type": "string"
+        }
+       }
+      }
+     },
+     "default": {
+      "$ref": "#/components/responses/Error"
+     }
+    },
+    "tags": [
+     "Utilities"
     ]
    }
   },

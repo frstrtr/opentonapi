@@ -86,6 +86,34 @@ tags:
       url: https://docs.tonconsole.com/tonapi/rest-api/utilities
 
 paths:
+  /v2/openapi.json:
+    get:
+      description: Get the openapi.json file
+      operationId: getOpenapiJson
+      tags:
+        - Utilities
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: { } # Free-form JSON value
+        'default':
+          $ref: '#/components/responses/Error'
+  /v2/openapi.yml:
+    get:
+      description: Get the openapi.yml file
+      operationId: getOpenapiYml
+      tags:
+        - Utilities
+      responses:
+        '200':
+          content:
+            application/yaml:
+              schema:
+                type: string
+                format: binary
+        'default':
+          $ref: '#/components/responses/Error'
   /v2/status:
     get:
       description: Status
@@ -3156,6 +3184,10 @@ components:
                 items:
                   type: string
                   format: cell
+              meta:
+                type: object
+                additionalProperties:
+                  type: string
     EmulationBoc:
       description: bag-of-cells serialized to base64/hex and additional parameters to configure emulation
       required: true
@@ -5404,6 +5436,9 @@ components:
           $ref: '#/components/schemas/JettonVerificationType'
         custom_payload_api_uri: # todo: maybe remove
           type: string
+        score:
+          type: integer
+          format: int32
     JettonBalance:
       type: object
       required:
@@ -5719,6 +5754,7 @@ components:
             type: object
             required:
               - account
+              - qty
               - quantity
               - jetton
             properties:
@@ -5726,8 +5762,13 @@ components:
                 $ref: '#/components/schemas/AccountAddress'
               jetton:
                 $ref: '#/components/schemas/JettonPreview'
+              qty:
+                type: string
+                x-js-format: bigint
+                example: "200"
               quantity:
                 type: integer
+                deprecated: true
                 format: int64
                 x-js-format: bigint
                 example: 10
@@ -5848,10 +5889,15 @@ components:
     EcPreview:
       type: object
       required:
+        - id
         - symbol
         - decimals
         - image
       properties:
+        id:
+          type: integer
+          example: 239
+          format: int32
         symbol:
           type: string
           example: FMS
@@ -7004,6 +7050,9 @@ components:
           type: integer
           format: int32
           example: 2000
+        score:
+          type: integer
+          format: int32
     JettonHolders:
       type: object
       required:
@@ -7366,6 +7415,7 @@ components:
         - code
         - code_hash
         - methods
+        - compiler
       properties:
         code:
           type: string
@@ -7375,21 +7425,15 @@ components:
         methods:
           type: array
           items:
-            type: object
-            required:
-              - id
-              - method
-            properties:
-              id:
-                type: integer
-                format: int64
-              method:
-                type: string
-                example: "get_something"
+            $ref: '#/components/schemas/Method'
         compiler:
           type: string
           enum:
             - func
+            - fift
+            - tact
+        source:
+          $ref: '#/components/schemas/Source'
     PoolImplementationType:
       type: string
       enum:
@@ -7441,26 +7485,60 @@ components:
           format: int64
           example: 1668436763
     ExtraCurrency:
-          type: object
-          required:
-            - id
-            - amount
-            - decimals
-          properties:
-            id:
-              type: integer
-              example: 239
-              format: int32
-            amount:
-              type: string
-              x-js-format: bigint
-              example: "1000000000"
-            name:
-              type: string
-              example: FMS
-            decimals:
-              type: integer
-              example: 5
+      type: object
+      required:
+        - amount
+        - preview
+      properties:
+        amount:
+          type: string
+          x-js-format: bigint
+          example: "1000000000"
+        preview:
+          $ref: '#/components/schemas/EcPreview'
+    SourceFile:
+      type: object
+      required:
+        - name
+        - content
+        - is_entrypoint
+        - is_std_lib
+        - include_in_command
+      properties:
+        name:
+          type: string
+        content:
+          type: string
+        is_entrypoint:
+          type: boolean
+          example: false
+        is_std_lib:
+          type: boolean
+          example: false
+        include_in_command:
+          type: boolean
+          example: false
+    Source:
+      type: object
+      required:
+        - files
+      properties:
+        files:
+          type: array
+          items:
+            $ref: '#/components/schemas/SourceFile'
+    Method:
+      type: object
+      required:
+        - id
+        - method
+      properties:
+        id:
+          type: integer
+          format: int64
+        method:
+          type: string
+          example: "get_something"
   
   responses:
     Error:

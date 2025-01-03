@@ -4,6 +4,7 @@ package oas
 
 import (
 	"fmt"
+	"io"
 
 	"github.com/go-faster/errors"
 	"github.com/go-faster/jx"
@@ -1941,10 +1942,11 @@ func (s *BlockValueFlow) SetMinted(val BlockCurrencyCollection) {
 
 // Ref: #/components/schemas/BlockchainAccountInspect
 type BlockchainAccountInspect struct {
-	Code     string                                `json:"code"`
-	CodeHash string                                `json:"code_hash"`
-	Methods  []BlockchainAccountInspectMethodsItem `json:"methods"`
-	Compiler OptBlockchainAccountInspectCompiler   `json:"compiler"`
+	Code     string                           `json:"code"`
+	CodeHash string                           `json:"code_hash"`
+	Methods  []Method                         `json:"methods"`
+	Compiler BlockchainAccountInspectCompiler `json:"compiler"`
+	Source   OptSource                        `json:"source"`
 }
 
 // GetCode returns the value of Code.
@@ -1958,13 +1960,18 @@ func (s *BlockchainAccountInspect) GetCodeHash() string {
 }
 
 // GetMethods returns the value of Methods.
-func (s *BlockchainAccountInspect) GetMethods() []BlockchainAccountInspectMethodsItem {
+func (s *BlockchainAccountInspect) GetMethods() []Method {
 	return s.Methods
 }
 
 // GetCompiler returns the value of Compiler.
-func (s *BlockchainAccountInspect) GetCompiler() OptBlockchainAccountInspectCompiler {
+func (s *BlockchainAccountInspect) GetCompiler() BlockchainAccountInspectCompiler {
 	return s.Compiler
+}
+
+// GetSource returns the value of Source.
+func (s *BlockchainAccountInspect) GetSource() OptSource {
+	return s.Source
 }
 
 // SetCode sets the value of Code.
@@ -1978,25 +1985,34 @@ func (s *BlockchainAccountInspect) SetCodeHash(val string) {
 }
 
 // SetMethods sets the value of Methods.
-func (s *BlockchainAccountInspect) SetMethods(val []BlockchainAccountInspectMethodsItem) {
+func (s *BlockchainAccountInspect) SetMethods(val []Method) {
 	s.Methods = val
 }
 
 // SetCompiler sets the value of Compiler.
-func (s *BlockchainAccountInspect) SetCompiler(val OptBlockchainAccountInspectCompiler) {
+func (s *BlockchainAccountInspect) SetCompiler(val BlockchainAccountInspectCompiler) {
 	s.Compiler = val
+}
+
+// SetSource sets the value of Source.
+func (s *BlockchainAccountInspect) SetSource(val OptSource) {
+	s.Source = val
 }
 
 type BlockchainAccountInspectCompiler string
 
 const (
 	BlockchainAccountInspectCompilerFunc BlockchainAccountInspectCompiler = "func"
+	BlockchainAccountInspectCompilerFift BlockchainAccountInspectCompiler = "fift"
+	BlockchainAccountInspectCompilerTact BlockchainAccountInspectCompiler = "tact"
 )
 
 // AllValues returns all BlockchainAccountInspectCompiler values.
 func (BlockchainAccountInspectCompiler) AllValues() []BlockchainAccountInspectCompiler {
 	return []BlockchainAccountInspectCompiler{
 		BlockchainAccountInspectCompilerFunc,
+		BlockchainAccountInspectCompilerFift,
+		BlockchainAccountInspectCompilerTact,
 	}
 }
 
@@ -2004,6 +2020,10 @@ func (BlockchainAccountInspectCompiler) AllValues() []BlockchainAccountInspectCo
 func (s BlockchainAccountInspectCompiler) MarshalText() ([]byte, error) {
 	switch s {
 	case BlockchainAccountInspectCompilerFunc:
+		return []byte(s), nil
+	case BlockchainAccountInspectCompilerFift:
+		return []byte(s), nil
+	case BlockchainAccountInspectCompilerTact:
 		return []byte(s), nil
 	default:
 		return nil, errors.Errorf("invalid value: %q", s)
@@ -2016,34 +2036,15 @@ func (s *BlockchainAccountInspectCompiler) UnmarshalText(data []byte) error {
 	case BlockchainAccountInspectCompilerFunc:
 		*s = BlockchainAccountInspectCompilerFunc
 		return nil
+	case BlockchainAccountInspectCompilerFift:
+		*s = BlockchainAccountInspectCompilerFift
+		return nil
+	case BlockchainAccountInspectCompilerTact:
+		*s = BlockchainAccountInspectCompilerTact
+		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)
 	}
-}
-
-type BlockchainAccountInspectMethodsItem struct {
-	ID     int64  `json:"id"`
-	Method string `json:"method"`
-}
-
-// GetID returns the value of ID.
-func (s *BlockchainAccountInspectMethodsItem) GetID() int64 {
-	return s.ID
-}
-
-// GetMethod returns the value of Method.
-func (s *BlockchainAccountInspectMethodsItem) GetMethod() string {
-	return s.Method
-}
-
-// SetID sets the value of ID.
-func (s *BlockchainAccountInspectMethodsItem) SetID(val int64) {
-	s.ID = val
-}
-
-// SetMethod sets the value of Method.
-func (s *BlockchainAccountInspectMethodsItem) SetMethod(val string) {
-	s.Method = val
 }
 
 // Ref: #/components/schemas/BlockchainBlock
@@ -5124,9 +5125,15 @@ func (s *DomainRenewAction) SetRenewer(val AccountAddress) {
 
 // Ref: #/components/schemas/EcPreview
 type EcPreview struct {
+	ID       int32  `json:"id"`
 	Symbol   string `json:"symbol"`
 	Decimals int    `json:"decimals"`
 	Image    string `json:"image"`
+}
+
+// GetID returns the value of ID.
+func (s *EcPreview) GetID() int32 {
+	return s.ID
 }
 
 // GetSymbol returns the value of Symbol.
@@ -5142,6 +5149,11 @@ func (s *EcPreview) GetDecimals() int {
 // GetImage returns the value of Image.
 func (s *EcPreview) GetImage() string {
 	return s.Image
+}
+
+// SetID sets the value of ID.
+func (s *EcPreview) SetID(val int32) {
+	s.ID = val
 }
 
 // SetSymbol sets the value of Symbol.
@@ -5466,15 +5478,8 @@ func (s *Event) SetInProgress(val bool) {
 
 // Ref: #/components/schemas/ExtraCurrency
 type ExtraCurrency struct {
-	ID       int32     `json:"id"`
-	Amount   string    `json:"amount"`
-	Name     OptString `json:"name"`
-	Decimals int       `json:"decimals"`
-}
-
-// GetID returns the value of ID.
-func (s *ExtraCurrency) GetID() int32 {
-	return s.ID
+	Amount  string    `json:"amount"`
+	Preview EcPreview `json:"preview"`
 }
 
 // GetAmount returns the value of Amount.
@@ -5482,19 +5487,9 @@ func (s *ExtraCurrency) GetAmount() string {
 	return s.Amount
 }
 
-// GetName returns the value of Name.
-func (s *ExtraCurrency) GetName() OptString {
-	return s.Name
-}
-
-// GetDecimals returns the value of Decimals.
-func (s *ExtraCurrency) GetDecimals() int {
-	return s.Decimals
-}
-
-// SetID sets the value of ID.
-func (s *ExtraCurrency) SetID(val int32) {
-	s.ID = val
+// GetPreview returns the value of Preview.
+func (s *ExtraCurrency) GetPreview() EcPreview {
+	return s.Preview
 }
 
 // SetAmount sets the value of Amount.
@@ -5502,14 +5497,9 @@ func (s *ExtraCurrency) SetAmount(val string) {
 	s.Amount = val
 }
 
-// SetName sets the value of Name.
-func (s *ExtraCurrency) SetName(val OptString) {
-	s.Name = val
-}
-
-// SetDecimals sets the value of Decimals.
-func (s *ExtraCurrency) SetDecimals(val int) {
-	s.Decimals = val
+// SetPreview sets the value of Preview.
+func (s *ExtraCurrency) SetPreview(val EcPreview) {
+	s.Preview = val
 }
 
 // Ref: #/components/schemas/ExtraCurrencyTransferAction
@@ -6160,6 +6150,20 @@ func (s *GetNftItemsByAddressesReq) GetAccountIds() []string {
 // SetAccountIds sets the value of AccountIds.
 func (s *GetNftItemsByAddressesReq) SetAccountIds(val []string) {
 	s.AccountIds = val
+}
+
+type GetOpenapiYmlOK struct {
+	Data io.Reader
+}
+
+// Read reads data from the Data reader.
+//
+// Kept to satisfy the io.Reader interface.
+func (s GetOpenapiYmlOK) Read(p []byte) (n int, err error) {
+	if s.Data == nil {
+		return 0, io.EOF
+	}
+	return s.Data.Read(p)
 }
 
 type GetOutMsgQueueSizesOK struct {
@@ -7951,6 +7955,7 @@ type JettonInfo struct {
 	Preview      string                 `json:"preview"`
 	Verification JettonVerificationType `json:"verification"`
 	HoldersCount int32                  `json:"holders_count"`
+	Score        OptInt32               `json:"score"`
 }
 
 // GetMintable returns the value of Mintable.
@@ -7988,6 +7993,11 @@ func (s *JettonInfo) GetHoldersCount() int32 {
 	return s.HoldersCount
 }
 
+// GetScore returns the value of Score.
+func (s *JettonInfo) GetScore() OptInt32 {
+	return s.Score
+}
+
 // SetMintable sets the value of Mintable.
 func (s *JettonInfo) SetMintable(val bool) {
 	s.Mintable = val
@@ -8021,6 +8031,11 @@ func (s *JettonInfo) SetVerification(val JettonVerificationType) {
 // SetHoldersCount sets the value of HoldersCount.
 func (s *JettonInfo) SetHoldersCount(val int32) {
 	s.HoldersCount = val
+}
+
+// SetScore sets the value of Score.
+func (s *JettonInfo) SetScore(val OptInt32) {
+	s.Score = val
 }
 
 // Ref: #/components/schemas/JettonMetadata
@@ -8198,6 +8213,7 @@ type JettonPreview struct {
 	Image               string                 `json:"image"`
 	Verification        JettonVerificationType `json:"verification"`
 	CustomPayloadAPIURI OptString              `json:"custom_payload_api_uri"`
+	Score               OptInt32               `json:"score"`
 }
 
 // GetAddress returns the value of Address.
@@ -8235,6 +8251,11 @@ func (s *JettonPreview) GetCustomPayloadAPIURI() OptString {
 	return s.CustomPayloadAPIURI
 }
 
+// GetScore returns the value of Score.
+func (s *JettonPreview) GetScore() OptInt32 {
+	return s.Score
+}
+
 // SetAddress sets the value of Address.
 func (s *JettonPreview) SetAddress(val string) {
 	s.Address = val
@@ -8268,6 +8289,11 @@ func (s *JettonPreview) SetVerification(val JettonVerificationType) {
 // SetCustomPayloadAPIURI sets the value of CustomPayloadAPIURI.
 func (s *JettonPreview) SetCustomPayloadAPIURI(val OptString) {
 	s.CustomPayloadAPIURI = val
+}
+
+// SetScore sets the value of Score.
+func (s *JettonPreview) SetScore(val OptInt32) {
+	s.Score = val
 }
 
 // Ref: #/components/schemas/JettonQuantity
@@ -9003,6 +9029,32 @@ func (s *MessageMsgType) UnmarshalText(data []byte) error {
 	default:
 		return errors.Errorf("invalid value: %q", data)
 	}
+}
+
+// Ref: #/components/schemas/Method
+type Method struct {
+	ID     int64  `json:"id"`
+	Method string `json:"method"`
+}
+
+// GetID returns the value of ID.
+func (s *Method) GetID() int64 {
+	return s.ID
+}
+
+// GetMethod returns the value of Method.
+func (s *Method) GetMethod() string {
+	return s.Method
+}
+
+// SetID sets the value of ID.
+func (s *Method) SetID(val int64) {
+	s.ID = val
+}
+
+// SetMethod sets the value of Method.
+func (s *Method) SetMethod(val string) {
+	s.Method = val
 }
 
 // Ref: #/components/schemas/MethodExecutionResult
@@ -10218,52 +10270,6 @@ func (o OptBlockCurrencyCollection) Get() (v BlockCurrencyCollection, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptBlockCurrencyCollection) Or(d BlockCurrencyCollection) BlockCurrencyCollection {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptBlockchainAccountInspectCompiler returns new OptBlockchainAccountInspectCompiler with value set to v.
-func NewOptBlockchainAccountInspectCompiler(v BlockchainAccountInspectCompiler) OptBlockchainAccountInspectCompiler {
-	return OptBlockchainAccountInspectCompiler{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptBlockchainAccountInspectCompiler is optional BlockchainAccountInspectCompiler.
-type OptBlockchainAccountInspectCompiler struct {
-	Value BlockchainAccountInspectCompiler
-	Set   bool
-}
-
-// IsSet returns true if OptBlockchainAccountInspectCompiler was set.
-func (o OptBlockchainAccountInspectCompiler) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptBlockchainAccountInspectCompiler) Reset() {
-	var v BlockchainAccountInspectCompiler
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptBlockchainAccountInspectCompiler) SetTo(v BlockchainAccountInspectCompiler) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptBlockchainAccountInspectCompiler) Get() (v BlockchainAccountInspectCompiler, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptBlockchainAccountInspectCompiler) Or(d BlockchainAccountInspectCompiler) BlockchainAccountInspectCompiler {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -13720,6 +13726,52 @@ func (o OptSale) Or(d Sale) Sale {
 	return d
 }
 
+// NewOptSendBlockchainMessageReqMeta returns new OptSendBlockchainMessageReqMeta with value set to v.
+func NewOptSendBlockchainMessageReqMeta(v SendBlockchainMessageReqMeta) OptSendBlockchainMessageReqMeta {
+	return OptSendBlockchainMessageReqMeta{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptSendBlockchainMessageReqMeta is optional SendBlockchainMessageReqMeta.
+type OptSendBlockchainMessageReqMeta struct {
+	Value SendBlockchainMessageReqMeta
+	Set   bool
+}
+
+// IsSet returns true if OptSendBlockchainMessageReqMeta was set.
+func (o OptSendBlockchainMessageReqMeta) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptSendBlockchainMessageReqMeta) Reset() {
+	var v SendBlockchainMessageReqMeta
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptSendBlockchainMessageReqMeta) SetTo(v SendBlockchainMessageReqMeta) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptSendBlockchainMessageReqMeta) Get() (v SendBlockchainMessageReqMeta, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptSendBlockchainMessageReqMeta) Or(d SendBlockchainMessageReqMeta) SendBlockchainMessageReqMeta {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
 // NewOptSmartContractAction returns new OptSmartContractAction with value set to v.
 func NewOptSmartContractAction(v SmartContractAction) OptSmartContractAction {
 	return OptSmartContractAction{
@@ -13760,6 +13812,52 @@ func (o OptSmartContractAction) Get() (v SmartContractAction, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptSmartContractAction) Or(d SmartContractAction) SmartContractAction {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptSource returns new OptSource with value set to v.
+func NewOptSource(v Source) OptSource {
+	return OptSource{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptSource is optional Source.
+type OptSource struct {
+	Value Source
+	Set   bool
+}
+
+// IsSet returns true if OptSource was set.
+func (o OptSource) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptSource) Reset() {
+	var v Source
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptSource) SetTo(v Source) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptSource) Get() (v Source, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptSource) Or(d Source) Source {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -15144,8 +15242,9 @@ func (s *Sale) SetPrice(val Price) {
 type SendBlockchainMessageOK struct{}
 
 type SendBlockchainMessageReq struct {
-	Boc   OptString `json:"boc"`
-	Batch []string  `json:"batch"`
+	Boc   OptString                       `json:"boc"`
+	Batch []string                        `json:"batch"`
+	Meta  OptSendBlockchainMessageReqMeta `json:"meta"`
 }
 
 // GetBoc returns the value of Boc.
@@ -15158,6 +15257,11 @@ func (s *SendBlockchainMessageReq) GetBatch() []string {
 	return s.Batch
 }
 
+// GetMeta returns the value of Meta.
+func (s *SendBlockchainMessageReq) GetMeta() OptSendBlockchainMessageReqMeta {
+	return s.Meta
+}
+
 // SetBoc sets the value of Boc.
 func (s *SendBlockchainMessageReq) SetBoc(val OptString) {
 	s.Boc = val
@@ -15166,6 +15270,22 @@ func (s *SendBlockchainMessageReq) SetBoc(val OptString) {
 // SetBatch sets the value of Batch.
 func (s *SendBlockchainMessageReq) SetBatch(val []string) {
 	s.Batch = val
+}
+
+// SetMeta sets the value of Meta.
+func (s *SendBlockchainMessageReq) SetMeta(val OptSendBlockchainMessageReqMeta) {
+	s.Meta = val
+}
+
+type SendBlockchainMessageReqMeta map[string]string
+
+func (s *SendBlockchainMessageReqMeta) init() SendBlockchainMessageReqMeta {
+	m := *s
+	if m == nil {
+		m = map[string]string{}
+		*s = m
+	}
+	return m
 }
 
 type SendRawMessageOK struct {
@@ -15520,6 +15640,80 @@ func (s *SmartContractAction) SetPayload(val OptString) {
 // SetRefund sets the value of Refund.
 func (s *SmartContractAction) SetRefund(val OptRefund) {
 	s.Refund = val
+}
+
+// Ref: #/components/schemas/Source
+type Source struct {
+	Files []SourceFile `json:"files"`
+}
+
+// GetFiles returns the value of Files.
+func (s *Source) GetFiles() []SourceFile {
+	return s.Files
+}
+
+// SetFiles sets the value of Files.
+func (s *Source) SetFiles(val []SourceFile) {
+	s.Files = val
+}
+
+// Ref: #/components/schemas/SourceFile
+type SourceFile struct {
+	Name             string `json:"name"`
+	Content          string `json:"content"`
+	IsEntrypoint     bool   `json:"is_entrypoint"`
+	IsStdLib         bool   `json:"is_std_lib"`
+	IncludeInCommand bool   `json:"include_in_command"`
+}
+
+// GetName returns the value of Name.
+func (s *SourceFile) GetName() string {
+	return s.Name
+}
+
+// GetContent returns the value of Content.
+func (s *SourceFile) GetContent() string {
+	return s.Content
+}
+
+// GetIsEntrypoint returns the value of IsEntrypoint.
+func (s *SourceFile) GetIsEntrypoint() bool {
+	return s.IsEntrypoint
+}
+
+// GetIsStdLib returns the value of IsStdLib.
+func (s *SourceFile) GetIsStdLib() bool {
+	return s.IsStdLib
+}
+
+// GetIncludeInCommand returns the value of IncludeInCommand.
+func (s *SourceFile) GetIncludeInCommand() bool {
+	return s.IncludeInCommand
+}
+
+// SetName sets the value of Name.
+func (s *SourceFile) SetName(val string) {
+	s.Name = val
+}
+
+// SetContent sets the value of Content.
+func (s *SourceFile) SetContent(val string) {
+	s.Content = val
+}
+
+// SetIsEntrypoint sets the value of IsEntrypoint.
+func (s *SourceFile) SetIsEntrypoint(val bool) {
+	s.IsEntrypoint = val
+}
+
+// SetIsStdLib sets the value of IsStdLib.
+func (s *SourceFile) SetIsStdLib(val bool) {
+	s.IsStdLib = val
+}
+
+// SetIncludeInCommand sets the value of IncludeInCommand.
+func (s *SourceFile) SetIncludeInCommand(val bool) {
+	s.IncludeInCommand = val
 }
 
 // Ref: #/components/schemas/StateInit
@@ -17076,9 +17270,11 @@ func (s *ValueFlow) SetJettons(val []ValueFlowJettonsItem) {
 }
 
 type ValueFlowJettonsItem struct {
-	Account  AccountAddress `json:"account"`
-	Jetton   JettonPreview  `json:"jetton"`
-	Quantity int64          `json:"quantity"`
+	Account AccountAddress `json:"account"`
+	Jetton  JettonPreview  `json:"jetton"`
+	Qty     string         `json:"qty"`
+	// Deprecated: schema marks this property as deprecated.
+	Quantity int64 `json:"quantity"`
 }
 
 // GetAccount returns the value of Account.
@@ -17089,6 +17285,11 @@ func (s *ValueFlowJettonsItem) GetAccount() AccountAddress {
 // GetJetton returns the value of Jetton.
 func (s *ValueFlowJettonsItem) GetJetton() JettonPreview {
 	return s.Jetton
+}
+
+// GetQty returns the value of Qty.
+func (s *ValueFlowJettonsItem) GetQty() string {
+	return s.Qty
 }
 
 // GetQuantity returns the value of Quantity.
@@ -17104,6 +17305,11 @@ func (s *ValueFlowJettonsItem) SetAccount(val AccountAddress) {
 // SetJetton sets the value of Jetton.
 func (s *ValueFlowJettonsItem) SetJetton(val JettonPreview) {
 	s.Jetton = val
+}
+
+// SetQty sets the value of Qty.
+func (s *ValueFlowJettonsItem) SetQty(val string) {
+	s.Qty = val
 }
 
 // SetQuantity sets the value of Quantity.
